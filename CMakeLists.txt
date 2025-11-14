@@ -9,12 +9,32 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 
-# Option 2: If using fastgltf as a subdirectory (uncomment if fastgltf is in a subdirectory)
-# add_subdirectory(external/fastgltf)
+file(GLOB_RECURSE SOURCE_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/src/*")
+file(GLOB_RECURSE INCLUDE_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/include/*")
+
+set(INCLUDES "")
+set(SOURCES "")
+
+foreach(ITEM ${SOURCE_DIRS})
+    if(NOT IS_DIRECTORY ${ITEM})
+        list(APPEND SOURCES ${ITEM})
+    endif()
+endforeach()
+
+foreach(ITEM ${INCLUDE_DIRS})
+    if(IS_DIRECTORY ${ITEM})
+        list(APPEND INCLUDES ${ITEM})
+    endif()
+endforeach()
+
+list(APPEND INCLUDES "${CMAKE_SOURCE_DIR}/include/")
+
+message(STATUS "Sources found: ${SOURCES}")
+message(STATUS "Include directories found: ${INCLUDES}")
 
 # Create executable
 add_executable(${PROJECT_NAME}
-    src/main.cpp
+    ${SOURCES}
 )
 
 set(IMGUI_SOURCES

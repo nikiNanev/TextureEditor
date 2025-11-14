@@ -9,30 +9,9 @@
 
 #include <iostream>
 
-SDL_Texture *LoadTexture(const char *filePath, SDL_Renderer *renderer, SDL_FRect *src)
-{
+#include "Modules/Textures/Exporter.h"
+#include "Modules/Textures/Loader.h"
 
-    SDL_Surface *surface = IMG_Load(filePath);
-    if (!surface)
-    {
-        std::cout << "Failed to load image: " << SDL_GetError() << std::endl;
-        return NULL;
-    }
-
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!texture)
-    {
-        std::cout << "Failed to create texture: " << SDL_GetError() << std::endl;
-        return NULL;
-    }
-
-    src->w = texture->w;
-    src->h = texture->h;
-
-    SDL_DestroySurface(surface);
-
-    return texture;
-}
 
 SDL_FRect src_texture = {
     .x = 0.0f,
@@ -46,9 +25,15 @@ SDL_FRect dst_texture = {
     .w = 400.0f,
     .h = 400.0f};
 
-SDL_Texture *texture = NULL;
+const char *path;
+bool is_exported = false;
+float alpha = 0.0f;
+bool done_message = false;
 bool is_texture_dragging = false;
 float drag_offset_x = 0.0f, drag_offset_y = 0.0f;
+
+// Message export
+bool is_showed = false;
 
 bool is_dragging(SDL_FRect *dst_rect, const float *mouse_x, const float *mouse_y, float *drag_offset_x, float *drag_offset_y)
 {
@@ -64,13 +49,17 @@ bool is_dragging(SDL_FRect *dst_rect, const float *mouse_x, const float *mouse_y
     return false;
 }
 
+// Timing is everything
+float lastTime = 0.0f, currentTime = 0.0f;
+int seconds = 0;
+
 // Main code
 int main(int, char **)
 {
     // Setup SDL
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
+        std::cout << "Error: SDL_Init(): " << SDL_GetError() << std::endl;
         return 1;
     }
 
@@ -80,24 +69,19 @@ int main(int, char **)
                                           SDL_WINDOW_RESIZABLE);
     if (!window)
     {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+        std::cout << "Error: SDL_CreateWindow(): " << SDL_GetError() << std::endl;
         return 1;
     }
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
     if (!renderer)
     {
-        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
+        std::cout << "Error: SDL_CreateRenderer(): " << SDL_GetError() << std::endl;
         return 1;
     }
 
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
-
-    // Texture module
-
-    const ImVec2 init_position{10.0f, 10.0f};
-    const ImVec2 init_size{250.0f, (float)height - 30.0f};
 
     int init_window_flags = 0;
 
@@ -132,6 +116,13 @@ int main(int, char **)
     // (optional) set browser properties
     fileDialog.SetTitle("Choose Texture");
     fileDialog.SetTypeFilters({".png", ".jpeg", ".jpg", ".bmp"});
+
+    // Load Modules
+
+    Loader loader;
+
+    // Textures
+    Exporter exporter("../assets/exported.png");
 
     bool done = false;
     while (!done)
@@ -178,37 +169,114 @@ int main(int, char **)
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Texture", NULL, init_window_flags);
-
-        ImGui::SetWindowPos(init_position);
-        ImGui::SetWindowSize(init_size);
-
-        if (ImGui::CollapsingHeader("File"))
+        if (ImGui::BeginMainMenuBar())
         {
-            ImGui::SeparatorText("Select your texture");
-            if (ImGui::Button("Open"))
-            {
-                fileDialog.Open();
-            }
-        }
 
-        ImGui::End();
+            if (ImGui::BeginMenu("File"))
+            {
+
+                if (ImGui::MenuItem("Open"))
+                {
+                    fileDialog.Open();
+                }
+
+                if (ImGui::MenuItem("Save"))
+                {
+                    
+                    is_exported = exporter.toPNG(loader.get_texture(), loader.get_surface());
+                }
+
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMainMenuBar();
+        }
 
         fileDialog.Display();
 
         if (fileDialog.HasSelected())
         {
-            std::cout << "Selected filenames " << std::endl;
 
             for (auto selected : fileDialog.GetMultiSelected())
             {
-                std::cout << "File: " << selected.string() << std::endl;
-                texture = LoadTexture(selected.c_str(), renderer, &src_texture);
+                path = selected.c_str();
+                loader.texture_load(path, renderer, &src_texture);
             }
 
             fileDialog.ClearSelected();
         }
 
+        if (is_exported)
+        {
+
+            if (!done_message)
+            {
+                int width, height;
+                SDL_GetWindowSize(window, &width, &height);
+                const ImVec2 position(300.0f, 20.0f);
+                const ImVec2 size(160.0f, 10.0f);
+
+                const ImVec4 green = {0.0f, 180.0f, 0.0f, 255.0f};
+
+                init_window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
+
+                currentTime = SDL_GetTicks();
+
+                if (alpha >= 1.0f)
+                {
+                    alpha = 1.0f;
+
+                    is_showed = true;
+                }
+                else
+                {
+                    if (!is_showed)
+                    {
+                        if (currentTime > lastTime + 30.0f)
+                        {
+                            alpha += 0.05f;
+                            lastTime = currentTime;
+                        }
+                    }
+                }
+
+                if (is_showed)
+                {
+
+                    if (currentTime > lastTime + 1000.0f)
+                    {
+                        seconds++;
+                        lastTime = currentTime;
+                    }
+
+                    if (seconds == 2)
+                    {
+                        if (alpha <= 0.0f)
+                        {
+                            alpha = 0.0f;
+                            done_message = true;
+                        }
+                        else
+                        {
+                            if (currentTime > lastTime + 30.0f)
+                            {
+                                // Fade Out
+                                alpha -= 0.05f;
+                                lastTime = currentTime;
+                            }
+                        }
+                    }
+                }
+                ImGui::SetWindowPos(position);
+                ImGui::SetWindowSize(size);
+                ImGui::SetNextWindowBgAlpha(alpha);
+                ImGui::Begin("[INFO]", NULL, init_window_flags);
+
+                ImGui::TextColored(green, "Success exported png!");
+
+                ImGui::End();
+            }
+        }
         // Rendering
         ImGui::Render();
 
@@ -218,9 +286,9 @@ int main(int, char **)
         SDL_RenderClear(renderer);
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
 
-        if (texture)
+        if (loader.get_texture())
         {
-            SDL_RenderTexture(renderer, texture, &src_texture, &dst_texture);
+            SDL_RenderTexture(renderer, loader.get_texture(), &src_texture, &dst_texture);
         }
 
         SDL_RenderPresent(renderer);
@@ -231,6 +299,7 @@ int main(int, char **)
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
+    loader.cleanup();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
