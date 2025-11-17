@@ -11,6 +11,7 @@
 
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"
+#include "EditorState.h"
 
 
 SDL_FRect src_texture = {
@@ -110,6 +111,9 @@ int main(int, char **)
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    //Editor State init
+    editor_state editor_state;
+
     // File Dialog for textures
     ImGui::FileBrowser fileDialog;
 
@@ -132,6 +136,7 @@ int main(int, char **)
         {
             ImGui_ImplSDL3_ProcessEvent(&event);
             if (event.type == SDL_EVENT_QUIT)
+
                 done = true;
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
@@ -182,8 +187,43 @@ int main(int, char **)
 
                 if (ImGui::MenuItem("Save"))
                 {
-                    
+
+                    editor_state.f_opt.save_default = true;
+
                     is_exported = exporter.toPNG(loader.get_texture(), loader.get_surface());
+                }
+
+                if (ImGui::MenuItem("Close"))
+                {
+                    done = true;
+                }
+
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Edit"))
+            {
+                if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+                {
+                }
+                if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
+                {
+                } // Disabled item
+                ImGui::Separator();
+                if (ImGui::MenuItem("Cut", "Ctrl+X"))
+                {
+                }
+                if (ImGui::MenuItem("Copy", "Ctrl+C"))
+                {
+                }
+                if (ImGui::MenuItem("Paste", "Ctrl+V"))
+                {
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Image"))
+            {
+                if (ImGui::MenuItem("Blur"))
+                {
                 }
 
                 ImGui::EndMenu();

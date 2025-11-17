@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 
+find_package(dlib REQUIRED)
+
 file(GLOB_RECURSE SOURCE_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/src/*")
 file(GLOB_RECURSE INCLUDE_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/include/*")
 
@@ -64,6 +66,7 @@ target_include_directories(imgui PUBLIC ./include imgui ./external/imgui/backend
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    dlib::dlib
     SDL3
     SDL3_image
     imgui
