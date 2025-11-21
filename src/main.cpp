@@ -1,5 +1,7 @@
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"
+#include "Modules/Textures/State.h"
+
 #include "Modules/Effects/Blur.h"
 
 #include "EditorState.h"
@@ -15,19 +17,6 @@
 
 #include <iostream>
 
-SDL_FRect src_texture = {
-    .x = 0.0f,
-    .y = 0.0f,
-    .w = 0.0f,
-    .h = 0.0f};
-
-SDL_FRect dst_texture = {
-    .x = 400.0f,
-    .y = 200.0f,
-    .w = 400.0f,
-    .h = 400.0f};
-
-const char *path;
 bool is_exported = false;
 float alpha = 0.0f;
 bool done_message = false;
@@ -48,29 +37,50 @@ typedef enum
     WEBP_FORMAT,
     DNG_FORMAT,
 } formats;
+
 // Message export
 bool is_showed{false};
-
-bool is_dragging(SDL_FRect *dst_rect, const float *mouse_x, const float *mouse_y, float *drag_offset_x, float *drag_offset_y)
-{
-    // Check if mouse click collides with the texture's dst_rect
-    if (*mouse_x >= dst_rect->x && *mouse_x < dst_rect->x + dst_rect->w &&
-        *mouse_y >= dst_rect->y && *mouse_y < dst_rect->y + dst_rect->h)
-    {
-        // Calculate offset to keep the drag relative to click position
-        *drag_offset_x = *mouse_x - dst_rect->x;
-        *drag_offset_y = *mouse_y - dst_rect->y;
-        return true;
-    }
-    return false;
-}
 
 // Timing is everything
 float lastTime = 0.0f, currentTime = 0.0f;
 int seconds = 0;
 
-// Main code
-int main(int, char **)
+void edit_items()
+{
+    if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+    {
+    }
+    if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
+    {
+    }
+    ImGui::Separator();
+    if (ImGui::MenuItem("Cut", "Ctrl+X"))
+    {
+    }
+    if (ImGui::MenuItem("Copy", "Ctrl+C"))
+    {
+    }
+    if (ImGui::MenuItem("Paste", "Ctrl+V"))
+    {
+    }
+}
+
+typedef struct sdl_state
+{
+
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    int width, height;
+
+} sdl_state;
+
+typedef struct imgui_state
+{
+    int init_window_flags;
+    ImVec4 clear_color;
+} imgui_state;
+
+int init_sdl(sdl_state *state)
 {
     // Setup SDL
     if (!SDL_Init(SDL_INIT_VIDEO))
@@ -80,27 +90,29 @@ int main(int, char **)
     }
 
     // Create window with SDL_Renderer graphics context
-    SDL_Window *window = SDL_CreateWindow("Texture Editor v0.0.1",
-                                          1280, 720,
-                                          SDL_WINDOW_RESIZABLE);
-    if (!window)
+    state->window = SDL_CreateWindow("Texture Editor v0.0.1",
+                                     1280, 720,
+                                     SDL_WINDOW_RESIZABLE);
+    if (!state->window)
     {
         std::cout << "Error: SDL_CreateWindow(): " << SDL_GetError() << std::endl;
         return 1;
     }
 
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
-    if (!renderer)
+    state->renderer = SDL_CreateRenderer(state->window, NULL);
+    if (!state->renderer)
     {
         std::cout << "Error: SDL_CreateRenderer(): " << SDL_GetError() << std::endl;
         return 1;
     }
 
-    int width, height;
-    SDL_GetWindowSize(window, &width, &height);
+    SDL_GetWindowSize(state->window, &state->width, &state->height);
 
-    int init_window_flags = 0;
+    return 0;
+}
 
+void init_imgui(imgui_state *imgui_vstate, sdl_state *sdl_vstate)
+{
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -113,18 +125,154 @@ int main(int, char **)
     ImGui::StyleColorsDark();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer3_Init(renderer);
+    ImGui_ImplSDL3_InitForSDLRenderer(sdl_vstate->window, sdl_vstate->renderer);
+    ImGui_ImplSDLRenderer3_Init(sdl_vstate->renderer);
 
     // Load Fonts
     ImGuiIO &io_fonts = ImGui::GetIO();
     io_fonts.Fonts->AddFontDefault();
 
-    init_window_flags |= ImGuiWindowFlags_NoMove;
-    init_window_flags |= ImGuiWindowFlags_NoCollapse;
-    init_window_flags |= ImGuiWindowFlags_NoResize;
+    imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoMove;
+    imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoCollapse;
+    imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoResize;
 
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    imgui_vstate->clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+}
+
+void mouse_controls(SDL_Event *event)
+{
+    switch (event->type)
+    {
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        if (event->button.button == SDL_BUTTON_LEFT)
+        {
+            float mouse_x = event->button.x;
+            float mouse_y = event->button.y;
+            is_texture_dragging = !is_exporting && is_dragging(&dst_texture, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
+        }
+        break;
+
+    case SDL_EVENT_MOUSE_MOTION:
+        if (is_texture_dragging)
+        {
+            // Update dst_rect position based on mouse motion
+            dst_texture.x = event->motion.x - drag_offset_x;
+            dst_texture.y = event->motion.y - drag_offset_y;
+        }
+        break;
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+        if (event->button.button == SDL_BUTTON_LEFT)
+        {
+            is_texture_dragging = false; // Release the texture
+        }
+        break;
+    }
+}
+
+void dlib_exporter(const int format_idx, Loader *loader)
+{
+    switch (format_idx)
+    {
+    case PNG_FORMAT:
+    {
+        try
+        {
+            dlib::array2d<dlib::rgb_pixel> image;
+            dlib::load_image(image, loader->get_file_path());
+
+            const std::string file_output = "exported_dlib.png";
+            dlib::save_png(image, file_output);
+
+            std::cout << "Success export with dlib to png format" << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
+    break;
+    case JPEG_FORMAT:
+    {
+        try
+        {
+            dlib::array2d<dlib::rgb_pixel> image;
+            dlib::load_image(image, loader->get_file_path());
+
+            const std::string file_output = "exported_dlib.jpeg";
+            dlib::save_jpeg(image, file_output);
+
+            std::cout << "Success export with dlib to jpeg format" << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
+    break;
+    case BMP_FORMAT:
+    {
+        try
+        {
+            dlib::array2d<dlib::rgb_pixel> image;
+            dlib::load_image(image, loader->get_file_path());
+
+            const std::string file_output = "exported_dlib.bmp";
+            dlib::save_bmp(image, file_output);
+
+            std::cout << "Success export with dlib to bmp format" << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
+    break;
+    case WEBP_FORMAT:
+    {
+        try
+        {
+            dlib::array2d<dlib::rgb_pixel> image;
+            dlib::load_image(image, loader->get_file_path());
+
+            const std::string file_output = "exported_dlib.webp";
+            dlib::save_webp(image, file_output);
+
+            std::cout << "Success export with dlib to webp format" << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
+    break;
+    case DNG_FORMAT:
+    {
+        try
+        {
+            dlib::array2d<dlib::rgb_pixel> image;
+            dlib::load_image(image, loader->get_file_path());
+
+            const std::string file_output = "exported_dlib.dng";
+            dlib::save_dng(image, file_output);
+
+            std::cout << "Success export with dlib to dng format" << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
+    break;
+    }
+}
+
+int main(int, char **)
+{
+    sdl_state sdl_vstate;
+    imgui_state imgui_vstate;
+
+    init_sdl(&sdl_vstate);
+    init_imgui(&imgui_vstate, &sdl_vstate);
 
     // Editor State init
     editor_state editor_state;
@@ -155,35 +303,10 @@ int main(int, char **)
             if (event.type == SDL_EVENT_QUIT)
 
                 done = true;
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
+            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(sdl_vstate.window))
                 done = true;
 
-            switch (event.type)
-            {
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                if (event.button.button == SDL_BUTTON_LEFT)
-                {
-                    float mouse_x = event.button.x;
-                    float mouse_y = event.button.y;
-                    is_texture_dragging = !is_exporting && is_dragging(&dst_texture, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
-                }
-                break;
-
-            case SDL_EVENT_MOUSE_MOTION:
-                if (is_texture_dragging)
-                {
-                    // Update dst_rect position based on mouse motion
-                    dst_texture.x = event.motion.x - drag_offset_x;
-                    dst_texture.y = event.motion.y - drag_offset_y;
-                }
-                break;
-            case SDL_EVENT_MOUSE_BUTTON_UP:
-                if (event.button.button == SDL_BUTTON_LEFT)
-                {
-                    is_texture_dragging = false; // Release the texture
-                }
-                break;
-            }
+            mouse_controls(&event);
         }
 
         // Start the Dear ImGui frame
@@ -225,26 +348,12 @@ int main(int, char **)
             }
             if (ImGui::BeginMenu("Edit"))
             {
-                if (ImGui::MenuItem("Undo", "Ctrl+Z"))
-                {
-                }
-                if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
-                {
-                } // Disabled item
-                ImGui::Separator();
-                if (ImGui::MenuItem("Cut", "Ctrl+X"))
-                {
-                }
-                if (ImGui::MenuItem("Copy", "Ctrl+C"))
-                {
-                }
-                if (ImGui::MenuItem("Paste", "Ctrl+V"))
-                {
-                }
+                edit_items();
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Image"))
             {
+                ImGui::SeparatorText("Filters");
                 if (ImGui::MenuItem("Blur"))
                 {
                     editor_state.filter.blur = true;
@@ -263,8 +372,7 @@ int main(int, char **)
 
             for (auto selected : fileDialog.GetMultiSelected())
             {
-                path = selected.c_str();
-                loader.texture_load(path, renderer, &src_texture);
+                loader.texture_load(selected.c_str(), sdl_vstate.renderer, &src_texture);
             }
 
             fileDialog.ClearSelected();
@@ -276,13 +384,13 @@ int main(int, char **)
             if (!done_message)
             {
                 int width, height;
-                SDL_GetWindowSize(window, &width, &height);
+                SDL_GetWindowSize(sdl_vstate.window, &width, &height);
                 const ImVec2 position(300.0f, 20.0f);
                 const ImVec2 size(160.0f, 10.0f);
 
                 const ImVec4 green = {0.0f, 180.0f, 0.0f, 255.0f};
 
-                init_window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
+                imgui_vstate.init_window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
 
                 currentTime = SDL_GetTicks();
 
@@ -334,7 +442,7 @@ int main(int, char **)
                 ImGui::SetWindowPos(position);
                 ImGui::SetWindowSize(size);
                 ImGui::SetNextWindowBgAlpha(alpha);
-                ImGui::Begin("[INFO]", NULL, init_window_flags);
+                ImGui::Begin("[INFO]", NULL, imgui_vstate.init_window_flags);
 
                 ImGui::TextColored(green, "Success exported png!");
 
@@ -359,9 +467,9 @@ int main(int, char **)
                     editor_state.filter.blur = false;
 
                     if (blur.load(loader.get_file_path()))
-                            blur.apply(sigma);
+                        blur.apply(sigma);
 
-                        std::cout << "applied" << std::endl;
+                    std::cout << "applied" << std::endl;
 
                     ImGui::CloseCurrentPopup();
                 }
@@ -397,102 +505,11 @@ int main(int, char **)
 
                 if (ImGui::Button("Export", ImVec2(120, 0)))
                 {
-                    switch (format_idx)
-                    {
-                    case PNG_FORMAT:
-                    {
-                        try
-                        {
-                            dlib::array2d<dlib::rgb_pixel> image;
-                            dlib::load_image(image, loader.get_file_path());
-
-                            const std::string file_output = "exported_dlib.png";
-                            dlib::save_png(image, file_output);
-
-                            std::cout << "Success export with dlib to png format" << std::endl;
-                        }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }
-                    }
-                    break;
-                    case JPEG_FORMAT:
-                    {
-                        try
-                        {
-                            dlib::array2d<dlib::rgb_pixel> image;
-                            dlib::load_image(image, loader.get_file_path());
-
-                            const std::string file_output = "exported_dlib.jpeg";
-                            dlib::save_jpeg(image, file_output);
-
-                            std::cout << "Success export with dlib to jpeg format" << std::endl;
-                        }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }
-                    }
-                    break;
-                    case BMP_FORMAT:
-                    {
-                        try
-                        {
-                            dlib::array2d<dlib::rgb_pixel> image;
-                            dlib::load_image(image, loader.get_file_path());
-
-                            const std::string file_output = "exported_dlib.bmp";
-                            dlib::save_bmp(image, file_output);
-
-                            std::cout << "Success export with dlib to bmp format" << std::endl;
-                        }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }
-                    }
-                    break;
-                    case WEBP_FORMAT:
-                    {
-                        try
-                        {
-                            dlib::array2d<dlib::rgb_pixel> image;
-                            dlib::load_image(image, loader.get_file_path());
-
-                            const std::string file_output = "exported_dlib.webp";
-                            dlib::save_webp(image, file_output);
-
-                            std::cout << "Success export with dlib to webp format" << std::endl;
-                        }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }
-                    }
-                    break;
-                    case DNG_FORMAT:
-                    {
-                        try
-                        {
-                            dlib::array2d<dlib::rgb_pixel> image;
-                            dlib::load_image(image, loader.get_file_path());
-
-                            const std::string file_output = "exported_dlib.dng";
-                            dlib::save_dng(image, file_output);
-
-                            std::cout << "Success export with dlib to dng format" << std::endl;
-                        }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }
-                    }
-                    break;
-                    }
+                    dlib_exporter(format_idx, &loader);
 
                     editor_state.export_st.open_modal = false;
                     is_exporting = false;
+                    
                     ImGui::CloseCurrentPopup();
                 }
 
@@ -513,17 +530,17 @@ int main(int, char **)
 
         ImGui::EndFrame();
 
-        SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
-        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(sdl_vstate.renderer, (Uint8)(imgui_vstate.clear_color.x * 255), (Uint8)(imgui_vstate.clear_color.y * 255), (Uint8)(imgui_vstate.clear_color.z * 255), (Uint8)(imgui_vstate.clear_color.w * 255));
+        SDL_RenderClear(sdl_vstate.renderer);
 
         if (loader.get_texture())
         {
-            SDL_RenderTexture(renderer, loader.get_texture(), &src_texture, &dst_texture);
+            SDL_RenderTexture(sdl_vstate.renderer, loader.get_texture(), &src_texture, &dst_texture);
         }
 
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), sdl_vstate.renderer);
 
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(sdl_vstate.renderer);
     }
 
     // Cleanup
@@ -532,8 +549,8 @@ int main(int, char **)
     ImGui::DestroyContext();
 
     loader.cleanup();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(sdl_vstate.renderer);
+    SDL_DestroyWindow(sdl_vstate.window);
     SDL_Quit();
 
     return 0;
