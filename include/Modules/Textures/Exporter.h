@@ -23,9 +23,8 @@ class Exporter
 private:
     bool is_exported{false};
     std::string filename;
-
 public:
-    Exporter(std::string filename) : filename(filename) {}
+    Exporter(){}
 
     bool toPNG(const std::string filename);
     bool toJPEG();

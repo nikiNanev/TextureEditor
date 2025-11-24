@@ -4,7 +4,6 @@ bool Exporter::toPNG(const std::string filename)
 {
     try
     {
-
         dlib::array2d<dlib::rgb_pixel> image;
         dlib::load_image(image, filename.c_str());
 

@@ -74,6 +74,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
 )
 
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    -Wl,--no-whole-archive
+    -lsharpyuv
+)
+
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -21,7 +21,7 @@ bool Edge_Enhancement::apply(int &idx)
 
         dlib::array2d<dlib::rgb_alpha_pixel> output(image.nr() - 2, image.nc() - 2);
         
-        char matrix_edge_enhance[3][3] =
+        char edge_enhance[3][3] =
             {
                 {0, 0, 0},
                 {-1, 1, 0},
@@ -36,35 +36,35 @@ bool Edge_Enhancement::apply(int &idx)
             for (j = 0; j < image.nc() - 2; j++)
             {
 
-                sum_red = (image[i][j].red * matrix_edge_enhance[0][0] +
-                           image[i][j + 1].red * matrix_edge_enhance[0][1] +
-                           image[i][j + 2].red * matrix_edge_enhance[0][2] +
-                           image[i + 1][j].red * matrix_edge_enhance[1][0] +
-                           image[i + 1][j + 1].red * matrix_edge_enhance[1][1] +
-                           image[i + 1][j + 2].red * matrix_edge_enhance[1][2] +
-                           image[i + 2][j].red * matrix_edge_enhance[2][0] +
-                           image[i + 2][j + 1].red * matrix_edge_enhance[2][1] +
-                           image[i + 2][j + 2].red * matrix_edge_enhance[2][2]);
+                sum_red = (image[i][j].red * edge_enhance[0][0] +
+                           image[i][j + 1].red * edge_enhance[0][1] +
+                           image[i][j + 2].red * edge_enhance[0][2] +
+                           image[i + 1][j].red * edge_enhance[1][0] +
+                           image[i + 1][j + 1].red * edge_enhance[1][1] +
+                           image[i + 1][j + 2].red * edge_enhance[1][2] +
+                           image[i + 2][j].red * edge_enhance[2][0] +
+                           image[i + 2][j + 1].red * edge_enhance[2][1] +
+                           image[i + 2][j + 2].red * edge_enhance[2][2]);
 
-                sum_green = (image[i][j].green * matrix_edge_enhance[0][0] +
-                             image[i][j + 1].green * matrix_edge_enhance[0][1] +
-                             image[i][j + 2].green * matrix_edge_enhance[0][2] +
-                             image[i + 1][j].green * matrix_edge_enhance[1][0] +
-                             image[i + 1][j + 1].green * matrix_edge_enhance[1][1] +
-                             image[i + 1][j + 2].green * matrix_edge_enhance[1][2] +
-                             image[i + 2][j].green * matrix_edge_enhance[2][0] +
-                             image[i + 2][j + 1].green * matrix_edge_enhance[2][1] +
-                             image[i + 2][j + 2].green * matrix_edge_enhance[2][2]);
+                sum_green = (image[i][j].green * edge_enhance[0][0] +
+                             image[i][j + 1].green * edge_enhance[0][1] +
+                             image[i][j + 2].green * edge_enhance[0][2] +
+                             image[i + 1][j].green * edge_enhance[1][0] +
+                             image[i + 1][j + 1].green * edge_enhance[1][1] +
+                             image[i + 1][j + 2].green * edge_enhance[1][2] +
+                             image[i + 2][j].green * edge_enhance[2][0] +
+                             image[i + 2][j + 1].green * edge_enhance[2][1] +
+                             image[i + 2][j + 2].green * edge_enhance[2][2]);
 
-                sum_blue = (image[i][j].blue * matrix_edge_enhance[0][0] +
-                            image[i][j + 1].blue * matrix_edge_enhance[0][1] +
-                            image[i][j + 2].blue * matrix_edge_enhance[0][2] +
-                            image[i + 1][j].blue * matrix_edge_enhance[1][0] +
-                            image[i + 1][j + 1].blue * matrix_edge_enhance[1][1] +
-                            image[i + 1][j + 2].blue * matrix_edge_enhance[1][2] +
-                            image[i + 2][j].blue * matrix_edge_enhance[2][0] +
-                            image[i + 2][j + 1].blue * matrix_edge_enhance[2][1] +
-                            image[i + 2][j + 2].blue * matrix_edge_enhance[2][2]);
+                sum_blue = (image[i][j].blue * edge_enhance[0][0] +
+                            image[i][j + 1].blue * edge_enhance[0][1] +
+                            image[i][j + 2].blue * edge_enhance[0][2] +
+                            image[i + 1][j].blue * edge_enhance[1][0] +
+                            image[i + 1][j + 1].blue * edge_enhance[1][1] +
+                            image[i + 1][j + 2].blue * edge_enhance[1][2] +
+                            image[i + 2][j].blue * edge_enhance[2][0] +
+                            image[i + 2][j + 1].blue * edge_enhance[2][1] +
+                            image[i + 2][j + 2].blue * edge_enhance[2][2]);
 
                 output[i][j].red = sum_red / 9;
                 output[i][j].green = sum_green / 9;

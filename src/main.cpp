@@ -1,3 +1,5 @@
+#include "EditorState.h"
+
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"
 #include "Modules/Textures/State.h"
@@ -5,46 +7,16 @@
 #include "Modules/Effects/Filters/Blur.h"
 #include "Modules/Effects/Filters/Edge_Enhancement.h"
 
-#include "EditorState.h"
+#include "Modules/Messaging/Messenger.h"
 
-#include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
-
-#include "imfilebrowser.h"
-
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
-
-#include <iostream>
-
-bool is_exported = false;
-float alpha = 0.0f;
-bool done_message = false;
 bool is_texture_dragging = false;
-bool is_exporting = false;
+bool is_processing = false;
 float drag_offset_x = 0.0f, drag_offset_y = 0.0f;
-
-typedef struct message_state
-{
-    std::string message{"Successfully saved PNG!"};
-    int length{static_cast<int>(message.length())};
-
-    const ImVec2 pos = {20.0f, 30.0f};
-    const ImVec4 green = {0.0f, 180.0f, 0.0f, 255.0f};
-
-    bool is_showed{false};
-
-} message_state;
 
 // Filters
 // Gaussian
 float sigma{0.0f};
 bool is_sigma_set{false};
-
-// Timing is everything
-float lastTime = 0.0f, currentTime = 0.0f;
-int seconds = 0;
 
 void edit_items()
 {
@@ -65,21 +37,6 @@ void edit_items()
     {
     }
 }
-
-typedef struct sdl_state
-{
-
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-    int width, height;
-
-} sdl_state;
-
-typedef struct imgui_state
-{
-    int init_window_flags;
-    ImVec4 clear_color;
-} imgui_state;
 
 int init_sdl(sdl_state *state)
 {
@@ -149,7 +106,7 @@ void mouse_controls(SDL_Event *event)
         {
             float mouse_x = event->button.x;
             float mouse_y = event->button.y;
-            is_texture_dragging = !is_exporting && is_dragging(&dst_texture, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
+            is_texture_dragging = !is_processing && is_dragging(&dst_texture, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
         }
         break;
 
@@ -170,84 +127,6 @@ void mouse_controls(SDL_Event *event)
     }
 }
 
-void message_log(bool &done_message, bool &is_exported, sdl_state *sdl_vstate, imgui_state *imgui_vstate, message_state *message_vstate)
-{
-    if (!done_message && is_exported)
-    {
-
-        imgui_vstate->init_window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration;
-
-        currentTime = SDL_GetTicks();
-
-        if (alpha >= 1.0f)
-        {
-            alpha = 1.0f;
-
-            message_vstate->is_showed = true;
-        }
-        else
-        {
-            if (!message_vstate->is_showed)
-            {
-                if (currentTime > lastTime + 30.0f)
-                {
-                    alpha += 0.05f;
-                    lastTime = currentTime;
-                }
-            }
-        }
-
-        if (message_vstate->is_showed)
-        {
-
-            if (currentTime > lastTime + 1000.0f)
-            {
-                seconds++;
-                lastTime = currentTime;
-            }
-
-            if (seconds == 2)
-            {
-                if (alpha <= 0.0f)
-                {
-                    // Reset
-                    alpha = 0.0f;
-                    message_vstate->is_showed = false;
-                    done_message = true;
-                    seconds = 0;
-                }
-                else
-                {
-                    if (currentTime > lastTime + 30.0f)
-                    {
-                        // Fade Out
-                        alpha -= 0.05f;
-                        lastTime = currentTime;
-                    }
-                }
-            }
-        }
-
-        ImGui::SetNextWindowPos(message_vstate->pos);
-        ImGui::SetNextWindowBgAlpha(alpha);
-        ImGui::Begin("[INFO]", NULL, imgui_vstate->init_window_flags);
-
-        ImGuiStyle &style = ImGui::GetStyle();
-
-        float sizet = ImGui::CalcTextSize(message_vstate->message.c_str()).x + style.FramePadding.x * 2.0f;
-        float avail = ImGui::GetContentRegionAvail().x;
-        float alignment = 0.5f;
-        float off = (avail - sizet) * alignment;
-
-        if (off > 0.0f)
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
-
-        ImGui::TextColored(message_vstate->green, "%s", message_vstate->message.c_str());
-
-        ImGui::End();
-    }
-}
-
 int main(int, char **)
 {
     sdl_state sdl_vstate;
@@ -257,7 +136,9 @@ int main(int, char **)
     init_imgui(&imgui_vstate, &sdl_vstate);
 
     // Message states
-    message_state message_vstate;
+    message_state message_vstate = {
+        .message = "Successfully saved Image!" // Default
+    };
 
     // Editor State init
     editor_state editor_state;
@@ -272,11 +153,7 @@ int main(int, char **)
     // Load Modules
 
     Loader loader;
-
-    // Textures
-    Exporter exporter("../assets/exported.png");
-
-    Blur blur;
+    Exporter exporter;
 
     bool done = false;
     while (!done)
@@ -315,9 +192,8 @@ int main(int, char **)
 
                     if (loader.is_texture_loaded())
                     {
-                        is_exported = exporter.toPNG(loader.get_file_path());
-                        editor_state.f_opt.save_default = true;
-                        done_message = false;
+                        message_vstate.init = exporter.toPNG(loader.get_file_path());
+                        message_vstate.message = "Successfully saved image!";
                     }
                 }
 
@@ -372,12 +248,20 @@ int main(int, char **)
             fileDialog.ClearSelected();
         }
 
-        message_log(done_message, is_exported, &sdl_vstate, &imgui_vstate, &message_vstate);
+        // Messaging
+        if (message_vstate.init)
+        {
+            Messenger message;
+            message.display(&sdl_vstate, &imgui_vstate, &message_vstate);
+        }
 
         // Filtering
 
         if (editor_state.filter.blur && loader.is_texture_loaded())
         {
+            Blur blur;
+            is_processing = true;
+
             ImGui::OpenPopup("Blur");
 
             if (ImGui::BeginPopupModal("Blur", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -390,9 +274,12 @@ int main(int, char **)
                 if (ImGui::Button("Ok", ImVec2(60, 0)))
                 {
                     editor_state.filter.blur = false;
-
+                    is_processing = false;
                     if (blur.load(loader.get_file_path()))
                         blur.apply(sigma);
+
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied & Exported! ( Blur )";
 
                     ImGui::CloseCurrentPopup();
                 }
@@ -404,6 +291,7 @@ int main(int, char **)
                 {
                     is_sigma_set = false;
                     editor_state.filter.blur = false;
+                    is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
@@ -418,15 +306,20 @@ int main(int, char **)
             if (edge_enhance.load(loader.get_file_path()))
             {
                 edge_enhance.apply(idx);
+
+                message_vstate.init = true;
+                message_vstate.message = "Applied & Exported! ( Edge Enhancement )";
+
                 editor_state.filter.edge_enhancement = false;
             }
+
             editor_state.filter.edge_enhancement = false;
         }
 
         // Exporting ...
         if (editor_state.export_st.open_modal && loader.is_texture_loaded())
         {
-            is_exporting = true;
+            is_processing = true;
 
             ImGui::OpenPopup("Export");
 
@@ -444,7 +337,10 @@ int main(int, char **)
                     exporter.dlib_exporter(format_idx, &loader);
 
                     editor_state.export_st.open_modal = false;
-                    is_exporting = false;
+                    is_processing = false;
+
+                    message_vstate.init = true; // Success on export
+                    message_vstate.message = "Successful export!";
 
                     ImGui::CloseCurrentPopup();
                 }
@@ -455,7 +351,7 @@ int main(int, char **)
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_state.export_st.open_modal = false;
-                    is_exporting = false;
+                    is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();

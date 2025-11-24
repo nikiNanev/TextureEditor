@@ -1,3 +1,30 @@
+#pragma once
+
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
+
+#include "imfilebrowser.h"
+
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+
+#include <iostream>
+
+typedef struct sdl_state
+{
+
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    int width, height;
+
+} sdl_state;
+
+typedef struct imgui_state
+{
+    int init_window_flags;
+    ImVec4 clear_color;
+} imgui_state;
 
 // Filters
 typedef struct filters
@@ -5,11 +32,6 @@ typedef struct filters
     bool blur{false};
     bool edge_enhancement{false};
 } filters;
-
-typedef struct file_options
-{
-    bool save_default{false};
-} file_options;
 
 typedef struct _export_state
 {
@@ -21,10 +43,6 @@ typedef struct _export_state
 
 typedef struct _editor_state
 {
-
-    // File Options
-    file_options f_opt;
-
     // Export Options
     export_state export_st;
 
