@@ -6,7 +6,11 @@
 
 #include <dlib/image_io.h>
 
-static int idx{0};
+static int idx_png{0};
+static int idx_jpeg{0};
+static int idx_bmp{0};
+static int idx_dng{0};
+static int idx_webp{0};
 
 typedef enum
 {
@@ -22,13 +26,16 @@ class Exporter
 
 private:
     bool is_exported{false};
+    std::string output_directory{"../assets/"};
     std::string filename;
 public:
     Exporter(){}
 
     bool toPNG(const std::string filename);
-    bool toJPEG();
-    bool toBMP();
+    bool toJPEG(const std::string filename);
+    bool toBMP(const std::string filename);
+
+    std::string formater(const std::string filename, int *idx, const std::string format);
 
     void dlib_exporter(const int format_idx, Loader *loader);
 };

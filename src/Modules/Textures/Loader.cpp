@@ -2,18 +2,13 @@
 
 #include <dlib/image_io.h>
 
-SDL_Texture *Loader::texture_load(const char *filePath, SDL_Renderer *renderer, SDL_FRect *src)
+SDL_Texture *Loader::texture_load(const char *filename, SDL_Renderer *renderer, SDL_FRect *src)
 {
-    surface = IMG_Load(filePath);
-    this->set_file_path(filePath);
+    texture = IMG_LoadTexture(renderer, filename);
 
-    if (!surface)
-    {
-        std::cout << "Failed to load image: " << SDL_GetError() << std::endl;
-        return NULL;
-    }
+    this->filename_path = filename;
 
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
+
     if (!texture)
     {
         std::cout << "Failed to create texture: " << SDL_GetError() << std::endl;
@@ -30,6 +25,5 @@ SDL_Texture *Loader::texture_load(const char *filePath, SDL_Renderer *renderer, 
 
 void Loader::cleanup()
 {
-    SDL_DestroySurface(surface);
     SDL_DestroyTexture(texture);
 }

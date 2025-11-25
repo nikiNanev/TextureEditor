@@ -14,23 +14,26 @@ bool Blur::load(const std::string &filename)
     }
 }
 
-bool Blur::apply(float &sigma)
+bool Blur::apply(const float &sigma, Loader &loader, sdl_state *sdl_pstate)
 {
     static int counter = 0;
     try
     {
+
         dlib::gaussian_blur(
             image,
             image,
             sigma,
-            1001);
-        
-        std::string final_string = "exported_blur";
-        final_string.append(std::to_string(counter++));
-        final_string.append(".png");
+            500);
 
-        const std::string file_output = final_string;
-        dlib::save_png(image, file_output);
+        counter++;
+
+        Exporter exporter;
+        std::string filename = exporter.formater("export_blur_", &counter, ".png");
+        
+        dlib::save_png(image, filename);
+
+        loader.texture_load(filename.c_str(), sdl_pstate->renderer, &sdl_pstate->src);
 
         return true;
     }

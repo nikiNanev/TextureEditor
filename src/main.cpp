@@ -1,8 +1,7 @@
-#include "EditorState.h"
+#include "Modules/States/EditorState.h"
 
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"
-#include "Modules/Textures/State.h"
 
 #include "Modules/Effects/Filters/Blur.h"
 #include "Modules/Effects/Filters/Edge_Enhancement.h"
@@ -13,27 +12,12 @@ bool is_texture_dragging = false;
 bool is_processing = false;
 float drag_offset_x = 0.0f, drag_offset_y = 0.0f;
 
-// Filters
-// Gaussian
-float sigma{0.0f};
-bool is_sigma_set{false};
-
 void edit_items()
 {
     if (ImGui::MenuItem("Undo", "Ctrl+Z"))
     {
     }
     if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
-    {
-    }
-    ImGui::Separator();
-    if (ImGui::MenuItem("Cut", "Ctrl+X"))
-    {
-    }
-    if (ImGui::MenuItem("Copy", "Ctrl+C"))
-    {
-    }
-    if (ImGui::MenuItem("Paste", "Ctrl+V"))
     {
     }
 }
@@ -97,7 +81,21 @@ void init_imgui(imgui_state *imgui_vstate, sdl_state *sdl_vstate)
     imgui_vstate->clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 }
 
-void mouse_controls(SDL_Event *event)
+bool is_dragging(SDL_FRect *dst_rect, const float *mouse_x, const float *mouse_y, float *drag_offset_x, float *drag_offset_y)
+{
+    // Check if mouse click collides with the texture's dst_rect
+    if (*mouse_x >= dst_rect->x && *mouse_x < dst_rect->x + dst_rect->w &&
+        *mouse_y >= dst_rect->y && *mouse_y < dst_rect->y + dst_rect->h)
+    {
+        // Calculate offset to keep the drag relative to click position
+        *drag_offset_x = *mouse_x - dst_rect->x;
+        *drag_offset_y = *mouse_y - dst_rect->y;
+        return true;
+    }
+    return false;
+}
+
+void mouse_controls(SDL_Event *event, sdl_state &sdl_vstate)
 {
     switch (event->type)
     {
@@ -106,7 +104,7 @@ void mouse_controls(SDL_Event *event)
         {
             float mouse_x = event->button.x;
             float mouse_y = event->button.y;
-            is_texture_dragging = !is_processing && is_dragging(&dst_texture, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
+            is_texture_dragging = !is_processing && is_dragging(&sdl_vstate.dst, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
         }
         break;
 
@@ -114,8 +112,8 @@ void mouse_controls(SDL_Event *event)
         if (is_texture_dragging)
         {
             // Update dst_rect position based on mouse motion
-            dst_texture.x = event->motion.x - drag_offset_x;
-            dst_texture.y = event->motion.y - drag_offset_y;
+            sdl_vstate.dst.x = event->motion.x - drag_offset_x;
+            sdl_vstate.dst.y = event->motion.y - drag_offset_y;
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_UP:
@@ -129,7 +127,13 @@ void mouse_controls(SDL_Event *event)
 
 int main(int, char **)
 {
-    sdl_state sdl_vstate;
+    sdl_state sdl_vstate = {
+        .src = {
+            .x = 0.0f,
+            .y = 0.0f,
+            .w = 0.0f,
+            .h = 0.0f},
+        .dst = {.x = 400.0f, .y = 200.0f, .w = 400.0f, .h = 400.0f}};
     imgui_state imgui_vstate;
 
     init_sdl(&sdl_vstate);
@@ -151,7 +155,6 @@ int main(int, char **)
     fileDialog.SetTypeFilters({".png", ".jpeg", ".jpg", ".bmp"});
 
     // Load Modules
-
     Loader loader;
     Exporter exporter;
 
@@ -168,7 +171,7 @@ int main(int, char **)
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(sdl_vstate.window))
                 done = true;
 
-            mouse_controls(&event);
+            mouse_controls(&event, sdl_vstate);
         }
 
         // Start the Dear ImGui frame
@@ -192,7 +195,7 @@ int main(int, char **)
 
                     if (loader.is_texture_loaded())
                     {
-                        message_vstate.init = exporter.toPNG(loader.get_file_path());
+                        message_vstate.init = exporter.toPNG(loader.get_filename_path());
                         message_vstate.message = "Successfully saved image!";
                     }
                 }
@@ -216,6 +219,7 @@ int main(int, char **)
                 edit_items();
                 ImGui::EndMenu();
             }
+
             if (ImGui::BeginMenu("Image"))
             {
                 ImGui::SeparatorText("Filters");
@@ -242,7 +246,7 @@ int main(int, char **)
 
             for (auto selected : fileDialog.GetMultiSelected())
             {
-                loader.texture_load(selected.c_str(), sdl_vstate.renderer, &src_texture);
+                loader.texture_load(selected.c_str(), sdl_vstate.renderer, &sdl_vstate.src);
             }
 
             fileDialog.ClearSelected();
@@ -269,14 +273,18 @@ int main(int, char **)
                 ImGui::Text("Select your preferred format");
                 ImGui::Separator();
 
+                float sigma;
+
                 ImGui::SliderFloat("Sigma value", &sigma, 0.0f, 10.0f);
 
                 if (ImGui::Button("Ok", ImVec2(60, 0)))
                 {
                     editor_state.filter.blur = false;
                     is_processing = false;
-                    if (blur.load(loader.get_file_path()))
-                        blur.apply(sigma);
+                    if (blur.load(loader.get_filename_path()))
+                        blur.apply(sigma, loader, &sdl_vstate);
+
+                    loader.get_texture();
 
                     message_vstate.init = true;
                     message_vstate.message = " Applied & Exported! ( Blur )";
@@ -289,7 +297,6 @@ int main(int, char **)
 
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
-                    is_sigma_set = false;
                     editor_state.filter.blur = false;
                     is_processing = false;
                     ImGui::CloseCurrentPopup();
@@ -300,12 +307,10 @@ int main(int, char **)
 
         if (editor_state.filter.edge_enhancement && loader.is_texture_loaded())
         {
-            static int idx = 0;
-
             Edge_Enhancement edge_enhance;
-            if (edge_enhance.load(loader.get_file_path()))
+            if (edge_enhance.load(loader.get_filename_path()))
             {
-                edge_enhance.apply(idx);
+                edge_enhance.apply(loader, &sdl_vstate);
 
                 message_vstate.init = true;
                 message_vstate.message = "Applied & Exported! ( Edge Enhancement )";
@@ -367,7 +372,7 @@ int main(int, char **)
 
         if (loader.get_texture())
         {
-            SDL_RenderTexture(sdl_vstate.renderer, loader.get_texture(), &src_texture, &dst_texture);
+            SDL_RenderTexture(sdl_vstate.renderer, loader.get_texture(), &sdl_vstate.src, &sdl_vstate.dst);
         }
 
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), sdl_vstate.renderer);

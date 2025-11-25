@@ -17,7 +17,9 @@ typedef struct sdl_state
     SDL_Window *window;
     SDL_Renderer *renderer;
     int width, height;
-
+    
+    SDL_FRect src;
+    SDL_FRect dst;
 } sdl_state;
 
 typedef struct imgui_state
@@ -50,3 +52,4 @@ typedef struct _editor_state
     filters filter;
 
 } editor_state;
+

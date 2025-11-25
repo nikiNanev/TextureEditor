@@ -14,8 +14,9 @@ bool Edge_Enhancement::load(const std::string &filename)
     }
 }
 
-bool Edge_Enhancement::apply(int &idx)
+bool Edge_Enhancement::apply(Loader &loader, sdl_state *sdl_pstate)
 {
+    static int idx = 0;
     try
     {
 
@@ -73,11 +74,15 @@ bool Edge_Enhancement::apply(int &idx)
             }
         }
 
-        std::string filename_output = "../assets/export_edge_enhance";
-        filename_output.append(std::to_string(idx++));
-        filename_output.append(".png");
+        idx++;
 
-        save_png(output, filename_output);
+        Exporter exporter;
+        std::string filename = exporter.formater("export_edge_enchance_", &idx, ".png");
+
+        save_png(output, filename);
+
+        loader.texture_load(filename.c_str(), sdl_pstate->renderer, &sdl_pstate->src);
+
         return true;
     }
     catch (std::exception &e)

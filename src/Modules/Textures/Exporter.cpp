@@ -7,10 +7,9 @@ bool Exporter::toPNG(const std::string filename)
         dlib::array2d<dlib::rgb_pixel> image;
         dlib::load_image(image, filename.c_str());
 
-        std::string output = "default_export_";
-        output.append(std::to_string(idx++));
-        output.append(".png");
-        this->filename = output;
+        idx_png++;
+
+        this->filename = this->formater("export_png_", &idx_png, ".png");
 
         dlib::save_png(image, this->filename);
 
@@ -26,16 +25,16 @@ bool Exporter::toPNG(const std::string filename)
     return false;
 }
 
-bool Exporter::toJPEG()
+bool Exporter::toJPEG(const std::string filename)
 {
     try
     {
-        std::string output = "default_export_";
-        output.append(std::to_string(idx++));
-        output.append(".jpg");
-        this->filename = output;
         dlib::array2d<dlib::rgb_pixel> image;
-        dlib::load_image(image, this->filename.c_str());
+        dlib::load_image(image, filename.c_str());
+
+        idx_jpeg++;
+
+        this->filename = formater("export_jpeg_", &idx_jpeg, ".jpeg");
 
         dlib::save_jpeg(image, this->filename);
 
@@ -51,16 +50,16 @@ bool Exporter::toJPEG()
     return false;
 }
 
-bool Exporter::toBMP()
+bool Exporter::toBMP(const std::string filename)
 {
     try
     {
-        std::string output = "default_export_";
-        output.append(std::to_string(idx++));
-        output.append(".bmp");
-        this->filename = output;
         dlib::array2d<dlib::rgb_pixel> image;
         dlib::load_image(image, this->filename.c_str());
+
+        idx_bmp++;
+
+        this->filename = formater("export_bmp_", &idx_bmp, ".bmp");
 
         dlib::save_bmp(image, this->filename);
 
@@ -85,12 +84,14 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
         try
         {
             dlib::array2d<dlib::rgb_pixel> image;
-            dlib::load_image(image, loader->get_file_path());
+            dlib::load_image(image, loader->get_filename_path());
 
-            const std::string file_output = "exported_dlib.png";
-            dlib::save_png(image, file_output);
+            idx_png++;
 
-            std::cout << "Success export with dlib to png format" << std::endl;
+            this->filename = formater("export_png_", &idx_png, ".png");
+
+            dlib::save_png(image, this->filename);
+
         }
         catch (const std::exception &e)
         {
@@ -103,12 +104,13 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
         try
         {
             dlib::array2d<dlib::rgb_pixel> image;
-            dlib::load_image(image, loader->get_file_path());
+            dlib::load_image(image, loader->get_filename_path());
 
-            const std::string file_output = "exported_dlib.jpeg";
-            dlib::save_jpeg(image, file_output);
+            idx_jpeg++;
 
-            std::cout << "Success export with dlib to jpeg format" << std::endl;
+            this->filename = formater("export_jpeg_", &idx_jpeg, ".jpeg");
+            
+            dlib::save_jpeg(image, this->filename);
         }
         catch (const std::exception &e)
         {
@@ -121,12 +123,14 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
         try
         {
             dlib::array2d<dlib::rgb_pixel> image;
-            dlib::load_image(image, loader->get_file_path());
+            dlib::load_image(image, loader->get_filename_path());
 
-            const std::string file_output = "exported_dlib.bmp";
-            dlib::save_bmp(image, file_output);
+            idx_bmp++;
 
-            std::cout << "Success export with dlib to bmp format" << std::endl;
+            this->filename = formater("export_bmp_", &idx_bmp, ".bmp");
+
+            dlib::save_bmp(image, this->filename);
+
         }
         catch (const std::exception &e)
         {
@@ -139,12 +143,14 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
         try
         {
             dlib::array2d<dlib::rgb_pixel> image;
-            dlib::load_image(image, loader->get_file_path());
+            dlib::load_image(image, loader->get_filename_path());
 
-            const std::string file_output = "exported_dlib.webp";
-            dlib::save_webp(image, file_output);
+            idx_webp++;
 
-            std::cout << "Success export with dlib to webp format" << std::endl;
+            this->filename = formater("export_webp_", &idx_webp, ".webp");
+
+            dlib::save_webp(image, this->filename);
+
         }
         catch (const std::exception &e)
         {
@@ -157,12 +163,13 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
         try
         {
             dlib::array2d<dlib::rgb_pixel> image;
-            dlib::load_image(image, loader->get_file_path());
+            dlib::load_image(image, loader->get_filename_path());
 
-            const std::string file_output = "exported_dlib.dng";
-            dlib::save_dng(image, file_output);
+            idx_dng++;
 
-            std::cout << "Success export with dlib to dng format" << std::endl;
+            this->filename = formater("export_dng_", &idx_dng, ".dng");
+
+            dlib::save_dng(image, this->filename);
         }
         catch (const std::exception &e)
         {
@@ -171,4 +178,15 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
     }
     break;
     }
+}
+
+std::string Exporter::formater(const std::string filename, int *idx, const std::string format)
+{
+
+    std::string output = this->output_directory;
+    output.append(filename);
+    output.append(std::to_string(*idx));
+    output.append(format);
+
+    return output;
 }
