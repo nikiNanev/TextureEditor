@@ -17,6 +17,11 @@ public:
 
     SDL_Texture *texture_load(const char *filePath, SDL_Renderer *renderer, SDL_FRect *src);
 
+    void set_texture(SDL_Texture *texture)
+    {
+        this->texture = texture;
+    }
+
     SDL_Texture *get_texture() const
     {
         return this->texture;

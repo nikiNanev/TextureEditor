@@ -1,6 +1,5 @@
 #include <dlib/image_io.h>
 #include <dlib/image_transforms.h>
-#include <string>
 
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"

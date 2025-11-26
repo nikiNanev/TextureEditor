@@ -6,10 +6,7 @@
 
 #include "imfilebrowser.h"
 
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
-
-#include <iostream>
+#include "common.h"
 
 typedef struct sdl_state
 {
@@ -17,7 +14,7 @@ typedef struct sdl_state
     SDL_Window *window;
     SDL_Renderer *renderer;
     int width, height;
-    
+
     SDL_FRect src;
     SDL_FRect dst;
 } sdl_state;
@@ -51,5 +48,6 @@ typedef struct _editor_state
     // Filters
     filters filter;
 
-} editor_state;
+    bool is_processing{false};
 
+} editor_state;

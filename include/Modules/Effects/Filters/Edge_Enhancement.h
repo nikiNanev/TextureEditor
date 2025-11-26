@@ -1,4 +1,5 @@
-#include <string>
+#pragma once
+
 #include <dlib/image_io.h>
 
 #include "Modules/Textures/Exporter.h"

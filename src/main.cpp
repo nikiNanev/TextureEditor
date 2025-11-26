@@ -1,5 +1,7 @@
 #include "Modules/States/EditorState.h"
+#include "Modules/States/Memento/Caretaker.h"
 
+#include "Modules/Controls/Mouse.h"
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"
 
@@ -8,18 +10,22 @@
 
 #include "Modules/Messaging/Messenger.h"
 
-bool is_texture_dragging = false;
-bool is_processing = false;
-float drag_offset_x = 0.0f, drag_offset_y = 0.0f;
-
-void edit_items()
+void edit_items(Caretaker *caretaker, Loader *loader)
 {
     if (ImGui::MenuItem("Undo", "Ctrl+Z"))
     {
+        caretaker->undo(loader);
     }
     if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
     {
     }
+}
+
+void memento_cleanup(Originator *originator, Caretaker *caretaker)
+{
+
+    delete originator;
+    delete caretaker;
 }
 
 int init_sdl(sdl_state *state)
@@ -81,58 +87,13 @@ void init_imgui(imgui_state *imgui_vstate, sdl_state *sdl_vstate)
     imgui_vstate->clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 }
 
-bool is_dragging(SDL_FRect *dst_rect, const float *mouse_x, const float *mouse_y, float *drag_offset_x, float *drag_offset_y)
-{
-    // Check if mouse click collides with the texture's dst_rect
-    if (*mouse_x >= dst_rect->x && *mouse_x < dst_rect->x + dst_rect->w &&
-        *mouse_y >= dst_rect->y && *mouse_y < dst_rect->y + dst_rect->h)
-    {
-        // Calculate offset to keep the drag relative to click position
-        *drag_offset_x = *mouse_x - dst_rect->x;
-        *drag_offset_y = *mouse_y - dst_rect->y;
-        return true;
-    }
-    return false;
-}
-
-void mouse_controls(SDL_Event *event, sdl_state &sdl_vstate)
-{
-    switch (event->type)
-    {
-    case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        if (event->button.button == SDL_BUTTON_LEFT)
-        {
-            float mouse_x = event->button.x;
-            float mouse_y = event->button.y;
-            is_texture_dragging = !is_processing && is_dragging(&sdl_vstate.dst, &mouse_x, &mouse_y, &drag_offset_x, &drag_offset_y);
-        }
-        break;
-
-    case SDL_EVENT_MOUSE_MOTION:
-        if (is_texture_dragging)
-        {
-            // Update dst_rect position based on mouse motion
-            sdl_vstate.dst.x = event->motion.x - drag_offset_x;
-            sdl_vstate.dst.y = event->motion.y - drag_offset_y;
-        }
-        break;
-    case SDL_EVENT_MOUSE_BUTTON_UP:
-        if (event->button.button == SDL_BUTTON_LEFT)
-        {
-            is_texture_dragging = false; // Release the texture
-        }
-        break;
-    }
-}
-
 int main(int, char **)
 {
     sdl_state sdl_vstate = {
-        .src = {
-            .x = 0.0f,
-            .y = 0.0f,
-            .w = 0.0f,
-            .h = 0.0f},
+        .src = {.x = 0.0f,
+                .y = 0.0f,
+                .w = 0.0f,
+                .h = 0.0f},
         .dst = {.x = 400.0f, .y = 200.0f, .w = 400.0f, .h = 400.0f}};
     imgui_state imgui_vstate;
 
@@ -145,7 +106,13 @@ int main(int, char **)
     };
 
     // Editor State init
-    editor_state editor_state;
+    editor_state editor_vstate;
+
+    // Memento
+    std::srand(static_cast<unsigned int>(std::time(NULL)));
+
+    Originator *originator = new Originator("Init memento in texture editor");
+    Caretaker *caretaker = new Caretaker(originator);
 
     // File Dialog for textures
     ImGui::FileBrowser fileDialog;
@@ -158,6 +125,9 @@ int main(int, char **)
     Loader loader;
     Exporter exporter;
 
+    Mouse mouse;
+    mouse_controls mouse_vcontrols;
+
     bool done = false;
     while (!done)
     {
@@ -166,12 +136,11 @@ int main(int, char **)
         {
             ImGui_ImplSDL3_ProcessEvent(&event);
             if (event.type == SDL_EVENT_QUIT)
-
                 done = true;
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(sdl_vstate.window))
                 done = true;
 
-            mouse_controls(&event, sdl_vstate);
+            mouse.dragging(&event, sdl_vstate, &mouse_vcontrols, editor_vstate.is_processing);
         }
 
         // Start the Dear ImGui frame
@@ -203,7 +172,7 @@ int main(int, char **)
                 if (ImGui::MenuItem("Export"))
                 {
                     if (loader.is_texture_loaded())
-                        editor_state.export_st.open_modal = true;
+                        editor_vstate.export_st.open_modal = true;
                 }
 
                 if (ImGui::MenuItem("Close"))
@@ -216,7 +185,7 @@ int main(int, char **)
 
             if (ImGui::BeginMenu("Edit"))
             {
-                edit_items();
+                edit_items(caretaker, &loader);
                 ImGui::EndMenu();
             }
 
@@ -225,12 +194,29 @@ int main(int, char **)
                 ImGui::SeparatorText("Filters");
                 if (ImGui::MenuItem("Blur"))
                 {
-                    editor_state.filter.blur = true;
+                    editor_vstate.filter.blur = true;
+
+                    caretaker->backup();
+                    originator->save_action("Blur filter");
                 }
 
                 if (ImGui::MenuItem("Edge Enhancement"))
                 {
-                    editor_state.filter.edge_enhancement = true;
+                    editor_vstate.filter.edge_enhancement = true;
+
+                    caretaker->backup();
+                    originator->save_action("Edge Enhancement filter");
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Settings"))
+            {
+
+                if (ImGui::MenuItem("show history ( actions )"))
+                {
+                    caretaker->show_history();
                 }
 
                 ImGui::EndMenu();
@@ -261,10 +247,10 @@ int main(int, char **)
 
         // Filtering
 
-        if (editor_state.filter.blur && loader.is_texture_loaded())
+        if (editor_vstate.filter.blur && loader.is_texture_loaded())
         {
             Blur blur;
-            is_processing = true;
+            editor_vstate.is_processing = true;
 
             ImGui::OpenPopup("Blur");
 
@@ -273,18 +259,19 @@ int main(int, char **)
                 ImGui::Text("Select your preferred format");
                 ImGui::Separator();
 
-                float sigma;
+                static float sigma{0.0f};
 
                 ImGui::SliderFloat("Sigma value", &sigma, 0.0f, 10.0f);
 
                 if (ImGui::Button("Ok", ImVec2(60, 0)))
                 {
-                    editor_state.filter.blur = false;
-                    is_processing = false;
+                    editor_vstate.filter.blur = false;
+                    editor_vstate.is_processing = false;
+                    caretaker->backup();
+                    originator->save_snapshot(loader.get_texture());
+
                     if (blur.load(loader.get_filename_path()))
                         blur.apply(sigma, loader, &sdl_vstate);
-
-                    loader.get_texture();
 
                     message_vstate.init = true;
                     message_vstate.message = " Applied & Exported! ( Blur )";
@@ -297,34 +284,37 @@ int main(int, char **)
 
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
-                    editor_state.filter.blur = false;
-                    is_processing = false;
+                    editor_vstate.filter.blur = false;
+                    editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
             }
         }
 
-        if (editor_state.filter.edge_enhancement && loader.is_texture_loaded())
+        if (editor_vstate.filter.edge_enhancement && loader.is_texture_loaded())
         {
             Edge_Enhancement edge_enhance;
             if (edge_enhance.load(loader.get_filename_path()))
             {
+                caretaker->backup();
+                originator->save_snapshot(loader.get_texture());
+
                 edge_enhance.apply(loader, &sdl_vstate);
 
                 message_vstate.init = true;
                 message_vstate.message = "Applied & Exported! ( Edge Enhancement )";
 
-                editor_state.filter.edge_enhancement = false;
+                editor_vstate.filter.edge_enhancement = false;
             }
 
-            editor_state.filter.edge_enhancement = false;
+            editor_vstate.filter.edge_enhancement = false;
         }
 
         // Exporting ...
-        if (editor_state.export_st.open_modal && loader.is_texture_loaded())
+        if (editor_vstate.export_st.open_modal && loader.is_texture_loaded())
         {
-            is_processing = true;
+            editor_vstate.is_processing = true;
 
             ImGui::OpenPopup("Export");
 
@@ -341,11 +331,14 @@ int main(int, char **)
                 {
                     exporter.dlib_exporter(format_idx, &loader);
 
-                    editor_state.export_st.open_modal = false;
-                    is_processing = false;
+                    editor_vstate.export_st.open_modal = false;
+                    editor_vstate.is_processing = false;
 
                     message_vstate.init = true; // Success on export
                     message_vstate.message = "Successful export!";
+
+                    caretaker->backup();
+                    originator->save_action("Export image");
 
                     ImGui::CloseCurrentPopup();
                 }
@@ -355,8 +348,8 @@ int main(int, char **)
 
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
-                    editor_state.export_st.open_modal = false;
-                    is_processing = false;
+                    editor_vstate.export_st.open_modal = false;
+                    editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
@@ -384,6 +377,9 @@ int main(int, char **)
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
+
+    // Memento
+    memento_cleanup(originator, caretaker);
 
     loader.cleanup();
     SDL_DestroyRenderer(sdl_vstate.renderer);
