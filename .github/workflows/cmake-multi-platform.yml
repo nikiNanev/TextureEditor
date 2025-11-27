@@ -61,10 +61,9 @@ jobs:
         version: 3-latest
         version-sdl-image: 3-latest
 
-    - uses: davisking/dlib
+    - uses: davisking/dlib@master
       id: dlib
       with:
-        ref: master
         path: ./.github/workflows/build_cpp.yaml
         install-linux-dependencies: true
         version: 20-latest
