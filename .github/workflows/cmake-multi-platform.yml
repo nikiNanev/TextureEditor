@@ -67,11 +67,7 @@ jobs:
       run: |
         git clone https://github.com/davisking/dlib.git
         cd dlib
-        # Install CMake if not already (redundant but safe)
-        pip install cmake
-        # Build and install dlib (this compiles from source)
-        pip install . --verbose
-        cd ..
+        mkdir build; cd build; cmake ..; make; make install;
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
