@@ -6,7 +6,6 @@ bool Exporter::toPNG(const std::string filename)
     {
         dlib::array2d<dlib::rgb_pixel> image;
         dlib::load_image(image, filename.c_str());
-
         idx_png++;
 
         this->filename = this->formater("export_png_", &idx_png, ".png");
@@ -75,7 +74,7 @@ bool Exporter::toBMP(const std::string filename)
     return false;
 }
 
-void Exporter::dlib_exporter(const int format_idx, Loader *loader)
+void Exporter::dlib_exporter(const int format_idx, Loader *loader, double scale)
 {
     switch (format_idx)
     {
@@ -86,12 +85,14 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
             dlib::array2d<dlib::rgb_pixel> image;
             dlib::load_image(image, loader->filename_path);
 
+            if (scale != 1.0)
+                dlib::resize_image(scale, image);
+
             idx_png++;
 
             this->filename = formater("export_png_", &idx_png, ".png");
 
             dlib::save_png(image, this->filename);
-
         }
         catch (const std::exception &e)
         {
@@ -106,10 +107,13 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
             dlib::array2d<dlib::rgb_pixel> image;
             dlib::load_image(image, loader->filename_path);
 
+            if (scale != 1.0)
+                dlib::resize_image(scale, image);
+
             idx_jpeg++;
 
             this->filename = formater("export_jpeg_", &idx_jpeg, ".jpeg");
-            
+
             dlib::save_jpeg(image, this->filename);
         }
         catch (const std::exception &e)
@@ -125,12 +129,14 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
             dlib::array2d<dlib::rgb_pixel> image;
             dlib::load_image(image, loader->filename_path);
 
+            if (scale != 1.0)
+                dlib::resize_image(scale, image);
+
             idx_bmp++;
 
             this->filename = formater("export_bmp_", &idx_bmp, ".bmp");
 
             dlib::save_bmp(image, this->filename);
-
         }
         catch (const std::exception &e)
         {
@@ -145,12 +151,14 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
             dlib::array2d<dlib::rgb_pixel> image;
             dlib::load_image(image, loader->filename_path);
 
+            if (scale != 1.0)
+                dlib::resize_image(scale, image);
+
             idx_webp++;
 
             this->filename = formater("export_webp_", &idx_webp, ".webp");
 
             dlib::save_webp(image, this->filename);
-
         }
         catch (const std::exception &e)
         {
@@ -164,6 +172,9 @@ void Exporter::dlib_exporter(const int format_idx, Loader *loader)
         {
             dlib::array2d<dlib::rgb_pixel> image;
             dlib::load_image(image, loader->filename_path);
+
+            if(scale != 1.0)
+                dlib::resize_image(scale, image);
 
             idx_dng++;
 

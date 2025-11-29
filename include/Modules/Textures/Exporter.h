@@ -5,6 +5,7 @@
 #include "Modules/Textures/Loader.h"
 
 #include <dlib/image_io.h>
+#include <dlib/image_transforms.h>
 
 static int idx_png{0};
 static int idx_jpeg{0};
@@ -28,6 +29,7 @@ private:
     bool is_exported{false};
     std::string output_directory{"../assets/"};
     std::string filename;
+    double scale = 1.0f;
 public:
     Exporter(){}
 
@@ -37,5 +39,5 @@ public:
 
     std::string formater(const std::string filename, int *idx, const std::string format);
 
-    void dlib_exporter(const int format_idx, Loader *loader);
+    void dlib_exporter(const int format_idx, Loader *loader, double scale = 1.0);
 };

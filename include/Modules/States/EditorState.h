@@ -41,6 +41,14 @@ typedef struct _export_state
 
 } export_state;
 
+typedef struct edit
+{
+    bool is_resize{false};
+    bool is_scale{false};
+
+    float scale{1.0f};
+} edit;
+
 typedef struct _editor_state
 {
     // Export Options
@@ -48,6 +56,7 @@ typedef struct _editor_state
 
     // Filters
     filters filter;
+    edit edit;
 
     bool is_processing{false};
 

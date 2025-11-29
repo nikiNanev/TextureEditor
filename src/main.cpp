@@ -4,14 +4,16 @@
 #include "Modules/Controls/Mouse.h"
 #include "Modules/Textures/Exporter.h"
 #include "Modules/Textures/Loader.h"
+#include "Modules/Textures/Resize.h"
 
 #include "Modules/Effects/Filters/Blur.h"
 #include "Modules/Effects/Filters/Edge_Enhancement.h"
 #include "Modules/Effects/Filters/Brightness_Adjustment.h"
 
 #include "Modules/Messaging/Messenger.h"
+#include "Modules/Report/Report.h"
 
-void edit_items(Caretaker *caretaker, Loader *loader)
+void edit_items(Caretaker *caretaker, Loader *loader, editor_state *editor_vstate)
 {
     if (ImGui::MenuItem("Undo", "Ctrl+Z"))
     {
@@ -19,6 +21,17 @@ void edit_items(Caretaker *caretaker, Loader *loader)
     }
     if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
     {
+    }
+    ImGui::Separator();
+
+    if (ImGui::MenuItem("Resize"))
+    {
+        editor_vstate->edit.is_resize = true;
+    }
+
+    if (ImGui::MenuItem("Scale"))
+    {
+        editor_vstate->edit.is_scale = true;
     }
 }
 
@@ -206,7 +219,7 @@ int main(int, char **)
 
             if (ImGui::BeginMenu("Edit"))
             {
-                edit_items(caretaker, &loader);
+                edit_items(caretaker, &loader, &editor_vstate);
                 ImGui::EndMenu();
             }
 
@@ -246,6 +259,63 @@ int main(int, char **)
                 if (ImGui::MenuItem("show history ( actions )"))
                 {
                     caretaker->show_history();
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Report"))
+            {
+                // Report bugs/issues/wishlist
+                Report report;
+                report.init();
+
+                if (ImGui::MenuItem("Issues"))
+                {
+                    report.issues();
+                }
+
+                if (ImGui::MenuItem("Wishlist"))
+                {
+                    report.wishlist();
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("About"))
+            {
+
+                // About the Authors/Editors/Feedbackers
+
+                if (ImGui::MenuItem("Author"))
+                {
+                }
+
+                if (ImGui::MenuItem("Github"))
+                {
+                }
+
+                if (ImGui::MenuItem("Info"))
+                {
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Help"))
+            {
+
+                if (ImGui::MenuItem("Manual"))
+                {
+                }
+
+                if (ImGui::MenuItem("Docs"))
+                {
+                }
+
+                if (ImGui::MenuItem("Info"))
+                {
                 }
 
                 ImGui::EndMenu();
@@ -363,6 +433,94 @@ int main(int, char **)
             editor_vstate.filter.brightness_adjustment = false;
         }
 
+        // Editing ( Resize )
+        if (editor_vstate.edit.is_resize && loader.is_texture)
+        {
+            Resize resize;
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("Resize");
+
+            if (ImGui::BeginPopupModal("Resize", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Resizing of the main texture");
+                ImGui::Separator();
+
+                static float width{0.0f}, height{0.0f};
+
+                ImGui::SliderFloat("Width", &width, 0.0f, 2500.0f);
+                ImGui::SliderFloat("Height", &height, 0.0f, 2500.0f);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.edit.is_resize = false;
+                    editor_vstate.is_processing = false;
+                    caretaker->backup();
+                    originator->save_snapshot(loader.texture, loader.filename_path);
+
+                    // Apply the Resize
+                    resize.apply(&loader, &sdl_vstate, width, height);
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied & Exported! ( Resized )";
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.edit.is_resize = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+
+        if (editor_vstate.edit.is_scale && loader.is_texture)
+        {
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("Scaling");
+
+            if (ImGui::BeginPopupModal("Scaling", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Scaling of the main texture");
+                ImGui::Separator();
+
+                static float scale{1.0f};
+
+                ImGui::SliderFloat("Scale", &scale, 1.0f, 10.0f);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.edit.is_scale = false;
+                    editor_vstate.is_processing = false;
+
+                    // Apply the Scaling
+                    editor_vstate.edit.scale = scale;
+
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied! ( Scaled )";
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.edit.is_scale = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+
         // Exporting ...
         if (editor_vstate.export_st.open_modal && loader.is_texture)
         {
@@ -381,7 +539,7 @@ int main(int, char **)
 
                 if (ImGui::Button("Export", ImVec2(120, 0)))
                 {
-                    exporter.dlib_exporter(format_idx, &loader);
+                    exporter.dlib_exporter(format_idx, &loader, editor_vstate.edit.scale);
 
                     editor_vstate.export_st.open_modal = false;
                     editor_vstate.is_processing = false;
