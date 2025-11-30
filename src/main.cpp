@@ -13,6 +13,8 @@
 #include "Modules/Messaging/Messenger.h"
 #include "Modules/Report/Report.h"
 
+#include "Modules/Styles/Background.h"
+
 void edit_items(Caretaker *caretaker, Loader *loader, editor_state *editor_vstate)
 {
     if (ImGui::MenuItem("Undo", "Ctrl+Z"))
@@ -98,7 +100,7 @@ void init_imgui(imgui_state *imgui_vstate, sdl_state *sdl_vstate)
     imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoCollapse;
     imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoResize;
 
-    imgui_vstate->clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    imgui_vstate->clear_color = GetWarmBackgroundColor(WarmBackgrounds::LatteCream);
 }
 
 int main(int, char **)
@@ -259,6 +261,20 @@ int main(int, char **)
                 if (ImGui::MenuItem("show history ( actions )"))
                 {
                     caretaker->show_history();
+                }
+
+                ImGui::SeparatorText("Styles");
+
+                if (ImGui::MenuItem("Themes"))
+                {
+                    editor_vstate.styles.theme = true;
+                    editor_vstate.export_st.open_modal = true;
+                }
+
+                if (ImGui::MenuItem("Background"))
+                {
+                    editor_vstate.styles.background = true;
+                    editor_vstate.export_st.open_modal = true;
                 }
 
                 ImGui::EndMenu();
@@ -515,6 +531,121 @@ int main(int, char **)
                 {
                     editor_vstate.edit.is_scale = false;
                     editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+
+        // Styles ( Themes )
+        if (editor_vstate.styles.theme)
+        {
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("Themes");
+
+            if (ImGui::BeginPopupModal("Themes", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Select your preferred theme");
+                ImGui::Separator();
+
+                if (ImGui::BeginCombo("Themes", BackgroundThemeNames[(int)currentBgTheme]))
+                {
+                    for (int i = 0; i < (int)BgTheme::Count; i++)
+                    {
+                        bool is_selected = (int)currentBgTheme == i;
+                        if (ImGui::Selectable(BackgroundThemeNames[i], is_selected))
+                        {
+                            currentBgTheme = (BgTheme)i;
+                            ApplyBackgroundColor(); // Apply immediately
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
+                if (ImGui::Button("Okay", ImVec2(120, 0)))
+                {
+                    editor_vstate.export_st.open_modal = false;
+                    editor_vstate.is_processing = false;
+                    editor_vstate.styles.theme = false;
+
+                    message_vstate.init = true; // Success on export
+                    message_vstate.message = "Theme Changed!";
+
+                    caretaker->backup();
+                    originator->save_action("theme changed");
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.export_st.open_modal = false;
+                    editor_vstate.is_processing = false;
+                    editor_vstate.styles.theme = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+
+        if (editor_vstate.styles.background)
+        {
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("Background");
+
+            if (ImGui::BeginPopupModal("Background", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Select your preferred background");
+                ImGui::Separator();
+
+                if (ImGui::BeginCombo("Backgrounds", WarmBackgroundNames[(int)currentWarmBackground]))
+                {
+                    for (int i = 0; i < (int)WarmBackgrounds::Count; i++)
+                    {
+                        bool is_selected = (int)currentWarmBackground == i;
+                        if (ImGui::Selectable(WarmBackgroundNames[i], is_selected))
+                        {
+                            currentWarmBackground = (WarmBackgrounds)i;
+                            
+                            imgui_vstate.clear_color = GetWarmBackgroundColor(currentWarmBackground);
+
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
+                if (ImGui::Button("Okay", ImVec2(120, 0)))
+                {
+                    editor_vstate.export_st.open_modal = false;
+                    editor_vstate.is_processing = false;
+                    editor_vstate.styles.background = false;
+
+                    message_vstate.init = true; // Success on export
+                    message_vstate.message = "Background Changed!";
+
+                    caretaker->backup();
+                    originator->save_action("background changed");
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.export_st.open_modal = false;
+                    editor_vstate.is_processing = false;
+                    editor_vstate.styles.background = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();

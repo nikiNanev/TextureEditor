@@ -49,6 +49,12 @@ typedef struct edit
     float scale{1.0f};
 } edit;
 
+typedef struct Styles
+{
+    bool theme{false};
+    bool background{false};
+} Styles;
+
 typedef struct _editor_state
 {
     // Export Options
@@ -57,7 +63,7 @@ typedef struct _editor_state
     // Filters
     filters filter;
     edit edit;
-
+    Styles styles;
     bool is_processing{false};
 
 } editor_state;
