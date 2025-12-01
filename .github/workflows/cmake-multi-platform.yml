@@ -65,9 +65,8 @@ jobs:
 
     - name: Clone and install dlib from repo
       run: |
-        git clone https://github.com/davisking/dlib.git
-        cd dlib
-        mkdir build; cd build; cmake ..; make;
+        git clone https://github.com/davisking/dlib
+        python3 setup.py install
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
