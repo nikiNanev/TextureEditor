@@ -1,3 +1,6 @@
+#ifndef _MEMENTO_H_
+#define _MEMENTO_H_
+
 #include "common.h"
 #include <stack>
 #include <ctime>
@@ -11,3 +14,6 @@ public:
    virtual std::string date() const = 0;
    virtual std::string state() const = 0;
 };
+
+
+#endif

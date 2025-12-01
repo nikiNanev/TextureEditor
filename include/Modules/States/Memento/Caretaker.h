@@ -62,3 +62,10 @@ public:
 
     }
 };
+
+void memento_cleanup(Originator *originator, Caretaker *caretaker)
+{
+
+   delete originator;
+   delete caretaker;
+}

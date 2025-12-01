@@ -65,6 +65,11 @@ typedef struct report
     bool init{false};
 } Report_state;
 
+typedef struct _help
+{
+    bool manual{false};
+} help;
+
 typedef struct _editor_state
 {
     // Export Options
@@ -80,6 +85,8 @@ typedef struct _editor_state
     Styles styles;
 
     Report_state report;
+
+    help help;
 
     bool is_processing{false};
 } editor_state;

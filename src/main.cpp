@@ -1,107 +1,17 @@
-#include "Modules/States/EditorState.h"
-#include "Modules/States/Memento/Caretaker.h"
+#include "States/Memento/Caretaker.h"
 
-#include "Modules/Controls/Mouse.h"
-#include "Modules/Textures/Exporter.h"
-#include "Modules/Textures/Loader.h"
-#include "Modules/Textures/Resize.h"
+#include "Controls/Mouse.h"
 
-#include "Modules/Effects/Filters/Blur.h"
-#include "Modules/Effects/Filters/Edge_Enhancement.h"
-#include "Modules/Effects/Filters/Brightness_Adjustment.h"
+#include "Messaging/Messenger.h"
+#include "Styles/Background.h"
 
-#include "Modules/Messaging/Messenger.h"
-#include "Modules/Report/Report.h"
+#include "Menu/Menu.h"
 
-#include "Modules/Styles/Background.h"
+#define VERSION_MAJOR 1
+#define VERSION_MINOR 0
+#define VERSION_PATCH 0
 
-void edit_items(Caretaker *caretaker, Loader *loader, editor_state *editor_vstate)
-{
-    if (ImGui::MenuItem("Undo", "Ctrl+Z"))
-    {
-        caretaker->undo(loader);
-    }
-    if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
-    {
-    }
-    ImGui::Separator();
-
-    if (ImGui::MenuItem("Resize"))
-    {
-        editor_vstate->edit.is_resize = true;
-    }
-
-    if (ImGui::MenuItem("Scale"))
-    {
-        editor_vstate->edit.is_scale = true;
-    }
-}
-
-void memento_cleanup(Originator *originator, Caretaker *caretaker)
-{
-
-    delete originator;
-    delete caretaker;
-}
-
-int init_sdl(sdl_state *state)
-{
-    // Setup SDL
-    if (!SDL_Init(SDL_INIT_VIDEO))
-    {
-        std::cout << "Error: SDL_Init(): " << SDL_GetError() << std::endl;
-        return 1;
-    }
-
-    // Create window with SDL_Renderer graphics context
-    state->window = SDL_CreateWindow("Texture Editor v0.0.1",
-                                     1280, 720,
-                                     SDL_WINDOW_RESIZABLE);
-    if (!state->window)
-    {
-        std::cout << "Error: SDL_CreateWindow(): " << SDL_GetError() << std::endl;
-        return 1;
-    }
-
-    state->renderer = SDL_CreateRenderer(state->window, NULL);
-    if (!state->renderer)
-    {
-        std::cout << "Error: SDL_CreateRenderer(): " << SDL_GetError() << std::endl;
-        return 1;
-    }
-
-    SDL_GetWindowSize(state->window, &state->width, &state->height);
-
-    return 0;
-}
-
-void init_imgui(imgui_state *imgui_vstate, sdl_state *sdl_vstate)
-{
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-
-    // Setup Dear ImGui style appearance
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL3_InitForSDLRenderer(sdl_vstate->window, sdl_vstate->renderer);
-    ImGui_ImplSDLRenderer3_Init(sdl_vstate->renderer);
-
-    // Load Fonts
-    ImGuiIO &io_fonts = ImGui::GetIO();
-    io_fonts.Fonts->AddFontDefault();
-
-    imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoMove;
-    imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoCollapse;
-    imgui_vstate->init_window_flags |= ImGuiWindowFlags_NoResize;
-
-    imgui_vstate->clear_color = GetWarmBackgroundColor(WarmBackgrounds::LatteCream);
-}
+#include "Initializers.h"
 
 int main(int, char **)
 {
@@ -141,12 +51,22 @@ int main(int, char **)
     Loader loader;
     Exporter exporter;
 
+    // Controls
     Mouse mouse;
     mouse_controls mouse_vcontrols;
-
     bool left_cntrl_holded{false};
 
-    bool done = false;
+    // Main Menu items
+    menu_file menu_file;
+    menu_edit menu_edit;
+    menu_image menu_image;
+    menu_settings menu_settings;
+    menu_report menu_report;
+    menu_about menu_about;
+    menu_help menu_help;
+
+    bool done{false};
+
     while (!done)
     {
         SDL_Event event;
@@ -187,132 +107,13 @@ int main(int, char **)
         if (ImGui::BeginMainMenuBar())
         {
 
-            if (ImGui::BeginMenu("File"))
-            {
-
-                if (ImGui::MenuItem("Open"))
-                {
-                    fileDialog.Open();
-                }
-
-                if (ImGui::MenuItem("Save", "Default ( PNG )"))
-                {
-
-                    if (loader.is_texture)
-                    {
-                        message_vstate.init = exporter.toPNG(loader.filename_path);
-                        message_vstate.message = "Successfully saved image!";
-                    }
-                }
-
-                if (ImGui::MenuItem("Export"))
-                {
-                    if (loader.is_texture)
-                        editor_vstate.export_st.open_modal = true;
-                }
-
-                if (ImGui::MenuItem("Close"))
-                {
-                    done = true;
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Edit"))
-            {
-                edit_items(caretaker, &loader, &editor_vstate);
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Image"))
-            {
-                ImGui::SeparatorText("Filters");
-                if (ImGui::MenuItem("Blur"))
-                {
-                    editor_vstate.filter.blur = true;
-
-                    caretaker->backup();
-                    originator->save_action("Blur filter");
-                }
-
-                if (ImGui::MenuItem("Edge Enhancement"))
-                {
-                    editor_vstate.filter.edge_enhancement = true;
-
-                    caretaker->backup();
-                    originator->save_action("Edge Enhancement filter");
-                }
-
-                if (ImGui::MenuItem("Brightness Adjustment"))
-                {
-                    editor_vstate.filter.brightness_adjustment = true;
-
-                    caretaker->backup();
-                    originator->save_action("Brightness Adjustment");
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Settings"))
-            {
-
-                if (ImGui::MenuItem("history of actions"))
-                {
-                    caretaker->show_history();
-                }
-
-                ImGui::SeparatorText("Styles");
-
-                if (ImGui::MenuItem("Themes"))
-                {
-                    editor_vstate.styles.theme = true;
-                    editor_vstate.export_st.open_modal = true;
-                }
-
-                if (ImGui::MenuItem("Background"))
-                {
-                    editor_vstate.styles.background = true;
-                    editor_vstate.export_st.open_modal = true;
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Report"))
-            {
-
-                if (ImGui::MenuItem("Add Report"))
-                {
-                    editor_vstate.report.init = true;
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("About"))
-            {
-
-                // About the Authors/Editors/Feedbackers
-
-                if (ImGui::MenuItem("Info"))
-                {
-                    editor_vstate.info.desc = true;
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Help"))
-            {
-
-                if (ImGui::MenuItem("Manual"))
-                {
-                }
-
-                ImGui::EndMenu();
-            }
+            menu_file.display(fileDialog, loader, exporter, message_vstate, editor_vstate, done);
+            menu_edit.display(caretaker, loader, editor_vstate);
+            menu_image.display(caretaker, originator, editor_vstate);
+            menu_settings.display(caretaker, editor_vstate);
+            menu_report.display(editor_vstate);
+            menu_about.display(editor_vstate);
+            menu_help.display(editor_vstate);
 
             ImGui::EndMainMenuBar();
         }
@@ -321,13 +122,8 @@ int main(int, char **)
 
         if (fileDialog.HasSelected())
         {
+            loader.texture_load(fileDialog.GetSelected().c_str(), sdl_vstate.renderer, &sdl_vstate.src);
 
-            for (auto selected : fileDialog.GetMultiSelected())
-            {
-                loader.texture_load(selected.c_str(), sdl_vstate.renderer, &sdl_vstate.src);
-            }
-
-            ImGui::Text("Repo: ");
             fileDialog.ClearSelected();
         }
 
@@ -338,434 +134,28 @@ int main(int, char **)
             message.display(&sdl_vstate, &imgui_vstate, &message_vstate);
         }
 
-        // Adding Report
-        if (editor_vstate.report.init)
-        {
-            ImGui::OpenPopup("Report", ImGuiPopupFlags_AnyPopup);
-
-            if (ImGui::BeginPopupModal("Report", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Creating a report ...");
-                ImGui::Separator();
-
-                ImGui::BulletText("Category: ");
-                const char *items[] = {"Issues", "Wishlist", "Feedback"};
-                static int item = 0;
-                ImGui::Combo("Category", &item, items, IM_ARRAYSIZE(items));
-                static char text[1024 * 16] =
-                    {
-                        "Write your report here ...\n"};
-
-                ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-
-                ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-
-                ImGui::BulletText("More info: ");
-                ImGui::SameLine(0, 0);
-                ImGui::TextLinkOpenURL("https://github.com/nikiNanev/TextureEditor.git");
-
-                if (ImGui::Button("Report", ImVec2(120, 0)))
-                {
-                    //To Do (Receiving the report on email, site, database, something )
-
-
-                    message_vstate.init = true;
-                    message_vstate.message = " The report was created!";
-
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    editor_vstate.report.init = false;
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.report.init = false;
-                    editor_vstate.is_processing = false;
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::EndPopup();
-            }
-        }
-
-        // Info ( Author and Repo )
-        if (editor_vstate.info.desc)
-        {
-            ImGui::OpenPopup("Info", ImGuiPopupFlags_AnyPopup);
-
-            if (ImGui::BeginPopupModal("Info", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::BulletText("Design by: Niki Nanev");
-                ImGui::BulletText("Developer: Niki Nanev");
-                ImGui::Separator();
-
-                ImGui::BulletText("Repo: ");
-                ImGui::SameLine(0, 0);
-                ImGui::TextLinkOpenURL("https://github.com/nikiNanev/TextureEditor.git");
-
-                if (ImGui::Button("Okay", ImVec2(120, 0)))
-                {
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    editor_vstate.info.desc = false;
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::EndPopup();
-            }
-        }
-
         // Filtering
-
-        if (editor_vstate.filter.blur && loader.is_texture)
-        {
-            ImGui::SetItemDefaultFocus();
-            ImGui::SameLine();
-
-            if (ImGui::Button("Cancel", ImVec2(120, 0)))
-            {
-                editor_vstate.filter.blur = false;
-                editor_vstate.is_processing = false;
-                ImGui::CloseCurrentPopup();
-            }
-            Blur blur;
-            editor_vstate.is_processing = true;
-
-            ImGui::OpenPopup("Blur");
-
-            if (ImGui::BeginPopupModal("Blur", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Select your preferred format");
-                ImGui::Separator();
-
-                static float sigma{0.0f};
-
-                ImGui::SliderFloat("Sigma value", &sigma, 0.0f, 10.0f);
-
-                if (ImGui::Button("Ok", ImVec2(60, 0)))
-                {
-                    editor_vstate.filter.blur = false;
-                    editor_vstate.is_processing = false;
-                    caretaker->backup();
-                    originator->save_snapshot(loader.texture, loader.filename_path);
-
-                    if (blur.load(loader.filename_path))
-                        blur.apply(sigma, loader, &sdl_vstate);
-
-                    message_vstate.init = true;
-                    message_vstate.message = " Applied & Exported! ( Blur )";
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.filter.blur = false;
-                    editor_vstate.is_processing = false;
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
-
-        if (editor_vstate.filter.edge_enhancement && loader.is_texture)
-        {
-            Edge_Enhancement edge_enhance;
-            caretaker->backup();
-            originator->save_snapshot(loader.texture, loader.filename_path);
-
-            if (edge_enhance.load(loader.filename_path))
-            {
-                edge_enhance.apply(loader, &sdl_vstate);
-
-                message_vstate.init = true;
-                message_vstate.message = "Applied & Exported! ( Edge Enhancement )";
-
-                editor_vstate.filter.edge_enhancement = false;
-            }
-
-            editor_vstate.filter.edge_enhancement = false;
-        }
-
-        if (editor_vstate.filter.brightness_adjustment && loader.is_texture)
-        {
-            Brightness_Adjustment brightness_adjust;
-
-            caretaker->backup();
-            originator->save_snapshot(loader.texture, loader.filename_path);
-
-            if (brightness_adjust.load(loader.filename_path))
-            {
-
-                float alpha = 2.5;
-                int beta = 100;
-
-                brightness_adjust.apply(alpha, beta, loader, &sdl_vstate);
-
-                message_vstate.init = true;
-                message_vstate.message = "Applied & Exported! ( Brightness Adjustment )";
-
-                editor_vstate.filter.brightness_adjustment = false;
-            }
-            editor_vstate.filter.brightness_adjustment = false;
-        }
+        menu_image.filter_blur(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.edge_enhancement(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.brightness_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         // Editing ( Resize )
-        if (editor_vstate.edit.is_resize && loader.is_texture)
-        {
-            Resize resize;
-            editor_vstate.is_processing = true;
-
-            ImGui::OpenPopup("Resize");
-
-            if (ImGui::BeginPopupModal("Resize", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Resizing of the main texture");
-                ImGui::Separator();
-
-                static float width{0.0f}, height{0.0f};
-
-                ImGui::SliderFloat("Width", &width, 0.0f, 2500.0f);
-                ImGui::SliderFloat("Height", &height, 0.0f, 2500.0f);
-
-                if (ImGui::Button("Ok", ImVec2(60, 0)))
-                {
-                    editor_vstate.edit.is_resize = false;
-                    editor_vstate.is_processing = false;
-                    caretaker->backup();
-                    originator->save_snapshot(loader.texture, loader.filename_path);
-
-                    // Apply the Resize
-                    resize.apply(&loader, &sdl_vstate, width, height);
-                    message_vstate.init = true;
-                    message_vstate.message = " Applied & Exported! ( Resized )";
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.edit.is_resize = false;
-                    editor_vstate.is_processing = false;
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
-
-        if (editor_vstate.edit.is_scale && loader.is_texture)
-        {
-            editor_vstate.is_processing = true;
-
-            ImGui::OpenPopup("Scaling");
-
-            if (ImGui::BeginPopupModal("Scaling", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Scaling of the main texture");
-                ImGui::Separator();
-
-                static float scale{1.0f};
-
-                ImGui::SliderFloat("Scale", &scale, 1.0f, 10.0f);
-
-                if (ImGui::Button("Ok", ImVec2(60, 0)))
-                {
-                    editor_vstate.edit.is_scale = false;
-                    editor_vstate.is_processing = false;
-
-                    // Apply the Scaling
-                    editor_vstate.edit.scale = scale;
-
-                    message_vstate.init = true;
-                    message_vstate.message = " Applied! ( Scaled )";
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.edit.is_scale = false;
-                    editor_vstate.is_processing = false;
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
+        menu_edit.resize(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_edit.scale(editor_vstate, loader, message_vstate);
 
         // Styles ( Themes )
-        if (editor_vstate.styles.theme)
-        {
-            editor_vstate.is_processing = true;
+        menu_settings.themes(editor_vstate, caretaker, originator, message_vstate);
+        menu_settings.backgrounds(editor_vstate, caretaker, originator, message_vstate, imgui_vstate);
 
-            ImGui::OpenPopup("Themes", ImGuiPopupFlags_AnyPopup);
+        // Adding Report
+        menu_report.report(editor_vstate, message_vstate);
 
-            if (ImGui::BeginPopupModal("Themes", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Select your preferred theme");
-                ImGui::Separator();
-
-                if (ImGui::BeginCombo("Themes", BackgroundThemeNames[(int)currentBgTheme]))
-                {
-                    for (int i = 0; i < (int)BgTheme::Count; i++)
-                    {
-                        bool is_selected = (int)currentBgTheme == i;
-                        if (ImGui::Selectable(BackgroundThemeNames[i], is_selected))
-                        {
-                            currentBgTheme = (BgTheme)i;
-                        }
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-
-                if (ImGui::Button("Okay", ImVec2(120, 0)))
-                {
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    editor_vstate.styles.theme = false;
-
-                    message_vstate.init = true; // Success on export
-                    message_vstate.message = "Theme Changed!";
-
-                    ApplyBackgroundColor();
-
-                    caretaker->backup();
-                    originator->save_action("theme changed");
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    editor_vstate.styles.theme = false;
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
-
-        if (editor_vstate.styles.background)
-        {
-            editor_vstate.is_processing = true;
-
-            ImGui::OpenPopup("Background");
-
-            if (ImGui::BeginPopupModal("Background", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Select your preferred background");
-                ImGui::Separator();
-
-                if (ImGui::BeginCombo("Backgrounds", WarmBackgroundNames[(int)currentWarmBackground]))
-                {
-                    for (int i = 0; i < (int)WarmBackgrounds::Count; i++)
-                    {
-                        bool is_selected = (int)currentWarmBackground == i;
-                        if (ImGui::Selectable(WarmBackgroundNames[i], is_selected))
-                        {
-                            currentWarmBackground = (WarmBackgrounds)i;
-                        }
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-
-                if (ImGui::Button("Okay", ImVec2(120, 0)))
-                {
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    editor_vstate.styles.background = false;
-
-                    message_vstate.init = true; // Success on export
-                    message_vstate.message = "Background Changed!";
-
-                    imgui_vstate.clear_color = GetWarmBackgroundColor(currentWarmBackground);
-
-                    caretaker->backup();
-                    originator->save_action("background changed");
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    editor_vstate.styles.background = false;
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
+        // Info ( Author and Repo )
+        menu_about.info(editor_vstate);
 
         // Exporting ...
-        if (editor_vstate.export_st.open_modal && loader.is_texture)
-        {
-            editor_vstate.is_processing = true;
+        menu_file.exporting(editor_vstate, loader, caretaker, originator, message_vstate, exporter);
 
-            ImGui::OpenPopup("Export");
-
-            if (ImGui::BeginPopupModal("Export", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Select your preferred format");
-                ImGui::Separator();
-
-                static int format_idx{0};
-
-                ImGui::Combo("Let's doeit", &format_idx, "PNG\0JPEG\0BMP\0WEBP\0DNG\0\0");
-
-                if (ImGui::Button("Export", ImVec2(120, 0)))
-                {
-                    exporter.dlib_exporter(format_idx, &loader, editor_vstate.edit.scale);
-
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-
-                    message_vstate.init = true; // Success on export
-                    message_vstate.message = "Successful export!";
-
-                    caretaker->backup();
-                    originator->save_action("Export image");
-
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
-                {
-                    editor_vstate.export_st.open_modal = false;
-                    editor_vstate.is_processing = false;
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
         // Rendering
         ImGui::Render();
 
