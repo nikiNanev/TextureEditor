@@ -103,7 +103,6 @@ int main(int, char **)
                     rotations.controls(event, angle, factor_angle, add_wait_seconds, message_vstate);
                     flip.controls(event, message_vstate, add_wait_seconds);
                     center.controls(event, message_vstate, &center.point, loader.texture, &sdl_vstate);
-
                 }
 
                 if (event.key.key == SDLK_Z && left_cntrl_holded)
@@ -112,7 +111,7 @@ int main(int, char **)
                 }
             }
 
-            mouse.dragging(&event, sdl_vstate, &mouse_vcontrols, editor_vstate.is_processing);
+            mouse.dragging(&event, sdl_vstate, &mouse_vcontrols, center.rect, center.point, editor_vstate.is_processing);
         }
 
         // Start the Dear ImGui frame

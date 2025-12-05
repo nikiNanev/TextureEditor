@@ -1,6 +1,6 @@
 #include "Modules/Controls/Mouse.h"
 
-void Mouse::dragging(SDL_Event *event, sdl_state &sdl_vstate, mouse_controls *mouse_pcontrols, bool &is_processing)
+void Mouse::dragging(SDL_Event *event, sdl_state &sdl_vstate, mouse_controls *mouse_pcontrols, SDL_FRect &rect, SDL_FPoint &point, bool &is_processing)
 {
     switch (event->type)
     {
@@ -19,6 +19,8 @@ void Mouse::dragging(SDL_Event *event, sdl_state &sdl_vstate, mouse_controls *mo
             // Update dst_rect position based on mouse motion
             sdl_vstate.dst.x = event->motion.x - mouse_pcontrols->drag_offset_x;
             sdl_vstate.dst.y = event->motion.y - mouse_pcontrols->drag_offset_y;
+            rect.x = event->motion.x - mouse_pcontrols->drag_offset_x + point.x;
+            rect.y = event->motion.y - mouse_pcontrols->drag_offset_y + point.y;
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_UP:
