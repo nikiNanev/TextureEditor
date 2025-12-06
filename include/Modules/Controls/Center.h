@@ -2,6 +2,7 @@ typedef struct _center
 {
     SDL_FRect rect;
     SDL_FPoint point;
+    double angle;
 
     void init(sdl_state *sdl_vstate)
     {
@@ -56,5 +57,7 @@ typedef struct _center
             .y = sdl_vstate->dst.y + point->y,
             .w = 10.0f,
             .h = 10.0f};
+
+        
     }
 } center;

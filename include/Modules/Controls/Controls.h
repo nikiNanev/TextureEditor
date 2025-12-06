@@ -3,6 +3,5 @@
 #include "Flip.h"
 #include "Center.h"
 
-double angle = 0.0f;
 double factor_angle = 0.0f;
 double add_wait_seconds = 0.1f;

@@ -46,6 +46,9 @@ typedef struct edit
     bool is_resize{false};
     bool is_scale{false};
 
+    bool is_flip{false};
+    bool is_rotate{false};
+
     float scale{1.0f};
 } edit;
 

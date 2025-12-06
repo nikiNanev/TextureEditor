@@ -3,9 +3,9 @@
 #include "Messaging/Messenger.h"
 #include "Styles/Background.h"
 
-#include "Menu/Menu.h"
-
 #include "Controls/Controls.h"
+
+#include "Menu/Menu.h"
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
@@ -100,7 +100,7 @@ int main(int, char **)
                 if (loader.is_texture)
                 {
                     // Rotations
-                    rotations.controls(event, angle, factor_angle, add_wait_seconds, message_vstate);
+                    rotations.controls(event, center.angle, factor_angle, add_wait_seconds, message_vstate);
                     flip.controls(event, message_vstate, add_wait_seconds);
                     center.controls(event, message_vstate, &center.point, loader.texture, &sdl_vstate);
                 }
@@ -161,6 +161,9 @@ int main(int, char **)
         menu_edit.resize(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_edit.scale(editor_vstate, loader, message_vstate);
 
+        menu_edit.flip(editor_vstate, loader, message_vstate, &flip.flag);
+        menu_edit.rotate(editor_vstate, loader, message_vstate, &center, sdl_vstate);
+
         // Styles ( Themes )
         menu_settings.themes(editor_vstate, caretaker, originator, message_vstate);
         menu_settings.backgrounds(editor_vstate, caretaker, originator, message_vstate, imgui_vstate);
@@ -185,7 +188,7 @@ int main(int, char **)
         if (loader.texture)
         {
             // SDL_RenderTexture(sdl_vstate.renderer, loader.texture, &sdl_vstate.src, &sdl_vstate.dst);
-            SDL_RenderTextureRotated(sdl_vstate.renderer, loader.texture, &sdl_vstate.src, &sdl_vstate.dst, angle, &center.point, flip.flag);
+            SDL_RenderTextureRotated(sdl_vstate.renderer, loader.texture, &sdl_vstate.src, &sdl_vstate.dst, center.angle, &center.point, flip.flag);
             SDL_SetRenderDrawColor(sdl_vstate.renderer, 255, 0, 0, 255);
             SDL_RenderFillRect(sdl_vstate.renderer, &center.rect);            
         }

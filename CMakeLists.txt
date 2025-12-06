@@ -72,6 +72,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     SDL3
     SDL3_image
     imgui
+    m
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
