@@ -1,9 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
-

@@ -1,23 +1,25 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
- #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include "States/Memento/Caretaker.h"
+#include "states/memento/caretaker.h"
 
-#include "Messaging/Messenger.h"
-#include "Styles/Background.h"
+#include "logger/messenger.h"
+#include "styles/background.h"
 
-#include "Controls/Controls.h"
+#include "controls/controls.h"
 
-#include "Menu/Menu.h"
+#include "menu/menu.h"
+
+#include "stats/image_info.h"
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
 #define VERSION_PATCH 0
 
-#include "Initializers.h"
+#include "initializers.h"
 
 int main(int, char **)
 {
@@ -54,8 +56,8 @@ int main(int, char **)
     fileDialog.SetTypeFilters({".png", ".jpeg", ".jpg", ".bmp"});
 
     // Load Modules
-    Loader loader;
-    Exporter exporter;
+    loader loader;
+    exporter exporter;
 
     // Controls
     Mouse mouse;
@@ -70,6 +72,9 @@ int main(int, char **)
     menu_report menu_report;
     menu_about menu_about;
     menu_help menu_help;
+
+    //Info
+    image_info image_info;
 
     bool done{false};
 
@@ -154,8 +159,7 @@ int main(int, char **)
         // Messaging
         if (message_vstate.init)
         {
-            Messenger message;
-            message.display(&sdl_vstate, &imgui_vstate, &message_vstate);
+            message_vstate.display(&sdl_vstate, &imgui_vstate);
         }
 
         // Filtering
@@ -163,7 +167,10 @@ int main(int, char **)
         menu_image.edge_enhancement(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.brightness_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
-        menu_image.binary_thresholding(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.binary_thresholds(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+
+        //Info/Stats
+        image_info.display(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         // Editing ( Resize )
         menu_edit.resize(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);

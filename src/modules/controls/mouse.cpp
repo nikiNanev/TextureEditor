@@ -1,4 +1,4 @@
-#include "Modules/Controls/Mouse.h"
+#include "modules/controls/mouse.h"
 
 void Mouse::dragging(SDL_Event *event, sdl_state &sdl_vstate, mouse_controls *mouse_pcontrols, SDL_FRect &rect, SDL_FPoint &point, bool &is_processing)
 {

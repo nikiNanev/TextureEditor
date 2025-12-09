@@ -1,6 +1,6 @@
-#include "Modules/Textures/Resize.h"
+#include "textures/resize.h"
 
-void Resize::apply(Loader *loader, sdl_state *sdl_vstate, float &width, float &height)
+void resize::apply(loader *loader, sdl_state *sdl_vstate, float &width, float &height)
 {
     loader->texture->w = width;
     loader->texture->h = height;
@@ -10,6 +10,4 @@ void Resize::apply(Loader *loader, sdl_state *sdl_vstate, float &width, float &h
 
     sdl_vstate->dst.w = width;
     sdl_vstate->dst.h = height;
-
-    
 }
