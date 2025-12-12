@@ -29,10 +29,15 @@ typedef struct imgui_state
 typedef struct filters
 {
     bool blur{false};
+    
     bool edge_enhancement{false};
+    bool high_pass{false};
     bool brightness_adjustment{false};
+
     bool binary_thresholds{false};
     bool film_grain{false};
+
+    bool emboss{false};
 } filters;
 
 typedef struct _export_state

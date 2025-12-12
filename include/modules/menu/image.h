@@ -21,6 +21,14 @@ typedef struct _menu_image
                 originator->save_action("Edge Enhancement filter");
             }
 
+            if (ImGui::MenuItem("High Pass"))
+            {
+                editor_vstate.filter.high_pass = true;
+
+                caretaker->backup();
+                originator->save_action("High pass filter");
+            }
+
             if (ImGui::MenuItem("Brightness Adjustment"))
             {
                 editor_vstate.filter.brightness_adjustment = true;
@@ -39,6 +47,11 @@ typedef struct _menu_image
             if (ImGui::MenuItem("Film Grain"))
             {
                 editor_vstate.filter.film_grain = true;
+            }
+
+            if (ImGui::MenuItem("Emboss"))
+            {
+                editor_vstate.filter.emboss = true;
             }
 
 
@@ -123,6 +136,28 @@ typedef struct _menu_image
         }
     }
 
+    void high_pass(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.high_pass && loader.is_texture)
+        {
+            _high_pass high_pass;
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            if (high_pass.load(loader.filename_path, loader))
+            {
+                high_pass.apply(loader, &sdl_vstate);
+
+                message_vstate.init = true;
+                message_vstate.message = "Applied & Exported! ( Edge high_pass )";
+
+                editor_vstate.filter.high_pass = false;
+            }
+
+            editor_vstate.filter.high_pass = false;
+        }
+    }
+
     void brightness_adjustment(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
     {
         if (editor_vstate.filter.brightness_adjustment && loader.is_texture)
@@ -198,7 +233,7 @@ typedef struct _menu_image
 
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
-                    editor_vstate.filter.blur = false;
+                    editor_vstate.filter.binary_thresholds = false;
                     editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
@@ -255,6 +290,28 @@ typedef struct _menu_image
                 }
                 ImGui::EndPopup();
             }
+        }
+    }
+
+    void emboss(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.emboss && loader.is_texture)
+        {
+            _emboss emboss;
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            if (emboss.load(loader.filename_path, loader))
+            {
+                emboss.apply(loader, &sdl_vstate);
+
+                message_vstate.init = true;
+                message_vstate.message = "Applied & Exported! ( Emboss )";
+
+                editor_vstate.filter.emboss = false;
+            }
+
+            editor_vstate.filter.emboss = false;
         }
     }
 

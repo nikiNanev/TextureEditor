@@ -165,10 +165,13 @@ int main(int, char **)
         // Filtering
         menu_image.filter_blur(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.edge_enhancement(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.high_pass(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.brightness_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         menu_image.binary_thresholds(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.film_grain(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.emboss(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        
         //Info/Stats
         image_info.display(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 

@@ -54,11 +54,6 @@ typedef struct _binary_thresholds
 
         std::vector<unsigned char> mask(width * height, 0);
 
-        std::cout << std::endl;
-        std::cout << "R: ( min " << r[0] << " max " << r[1] << " )" << std::endl;
-        std::cout << "G: ( min " << g[0] << " max " << g[1] << " )" << std::endl;
-        std::cout << "B: ( min " << b[0] << " max " << b[1] << " )" << std::endl;
-
         static unsigned int idx = 0;
 
         for (int i = 0; i < width; ++i)

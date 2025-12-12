@@ -12,6 +12,8 @@
 #include "filters/brightness_adjustment.h"
 #include "filters/binary_thresholds.h"
 #include "filters/film_grain.h"
+#include "filters/high_pass.h"
+#include "filters/emboss.h"
 
 
 #include "states/memento/memento.h"
