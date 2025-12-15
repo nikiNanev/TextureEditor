@@ -1,10 +1,30 @@
 typedef struct _menu_image
 {
+    // utilities
+
+    static bool compare_colors(ImVec4 &prevColor, ImVec4 color)
+    {
+        if (prevColor.x == color.x && prevColor.y == color.y && prevColor.z == color.z)
+            return true;
+        return false;
+    }
+
     void display(Caretaker *caretaker, Originator *originator, editor_state &editor_vstate)
     {
         if (ImGui::BeginMenu("Image"))
         {
             ImGui::SeparatorText("Filters");
+
+            if (ImGui::MenuItem("Borders"))
+            {
+                editor_vstate.filter.borders = true;
+
+                caretaker->backup();
+                originator->save_action("Edge Enhancement filter");
+            }
+
+            ImGui::Separator();
+
             if (ImGui::MenuItem("Blur"))
             {
                 editor_vstate.filter.blur = true;
@@ -344,7 +364,7 @@ typedef struct _menu_image
                     editor_vstate.filter.gamma_correction = false;
                     editor_vstate.is_processing = false;
 
-                    if(prevGamma != gamma)
+                    if (prevGamma != gamma)
                         is_applied = false;
 
                     if (!is_applied)
@@ -374,7 +394,7 @@ typedef struct _menu_image
 
                 if (ImGui::Button("Apply", ImVec2(120, 0)))
                 {
-                    if(prevGamma != gamma)
+                    if (prevGamma != gamma)
                         is_applied = false;
 
                     if (!is_applied)
@@ -409,6 +429,108 @@ typedef struct _menu_image
                 }
                 ImGui::EndPopup();
             }
+        }
+    }
+
+    void borders(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.borders && loader.is_texture)
+        {
+            ImGui::OpenPopup("Borders");
+
+            if (ImGui::BeginPopup("Borders", ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Borders");
+                ImGui::Separator();
+
+                static ImVec4 color;
+                static ImVec4 prevColor = color;
+                static int border_width = 0;
+                static bool is_applied = false;
+
+                static float selectedColor[3] = {0, 0, 0};
+
+                ImGui::ColorPicker3("Border Color", selectedColor);
+
+                ImGui::SliderInt("Width", &border_width, 1, 300);
+
+                color.x = selectedColor[0];
+                color.y = selectedColor[1];
+                color.z = selectedColor[2];
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.filter.borders = false;
+                    editor_vstate.is_processing = false;
+
+                    if (!compare_colors(prevColor, color))
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _borders b;
+
+                        // apply
+                        if (b.load(loader.filename_path, loader))
+                        {
+                            b.apply(loader, &sdl_vstate, color, border_width);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Borders )";
+                        prevColor = color;
+                        is_applied = false;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                // ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Apply", ImVec2(120, 0)))
+                {
+                    if (compare_colors(prevColor, color))
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _borders b;
+
+                        // apply
+                        if (b.load(loader.filename_path, loader))
+                        {
+                            b.apply(loader, &sdl_vstate, color, border_width);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Borders )";
+                    }
+
+                    if (!compare_colors(prevColor, color))
+                    {
+                        is_applied = true;
+                        prevColor = color;
+                    }
+                }
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.borders = false;
+                    editor_vstate.is_processing = false;
+                    is_applied = false;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndPopup();
         }
     }
 

@@ -51,7 +51,7 @@ typedef struct menu_file
 
                 static int format_idx{0};
 
-                ImGui::Combo("Let's doeit", &format_idx, "PNG\0JPEG\0BMP\0WEBP\0DNG\0\0");
+                ImGui::Combo("Let's doeit", &format_idx, "PNG\0JPEG\0BMP\0\0");
 
                 if (ImGui::Button("Export", ImVec2(120, 0)))
                 {

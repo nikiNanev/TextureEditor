@@ -29,7 +29,8 @@ typedef struct imgui_state
 typedef struct filters
 {
     bool blur{false};
-    
+    bool borders{false};
+
     bool edge_enhancement{false};
     bool high_pass{false};
     bool brightness_adjustment{false};

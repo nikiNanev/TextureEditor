@@ -15,6 +15,7 @@
 #include "filters/high_pass.h"
 #include "filters/emboss.h"
 #include "filters/gamma_correction.h"
+#include "filters/borders.h"
 
 
 #include "states/memento/memento.h"

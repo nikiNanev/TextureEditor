@@ -2,10 +2,8 @@
 
 bool exporter::load()
 {
-    uint8_t desired_channels = 4;
-
     unsigned char *loaded_data = stbi_load(
-        filename.c_str(),
+        this->filename.c_str(),
         &width,
         &height,
         &channels,
@@ -13,7 +11,6 @@ bool exporter::load()
 
     if (loaded_data)
     {
-        // desired_channels is 0 if we kept original, otherwise it's the forced value
         channels = desired_channels != 0 ? desired_channels : channels;
 
         size_t size = static_cast<size_t>(width) * height * channels;
@@ -27,7 +24,7 @@ bool exporter::load()
     }
     else
     {
-        std::cout << "Failed to load image: " + filename + " - " + stbi_failure_reason() << std::endl;
+        std::cout << "Failed to load image: " + this->filename + " - " + stbi_failure_reason() << std::endl;
 
         this->is_exported = false;
         return false;
@@ -39,7 +36,8 @@ bool exporter::toPNG(const std::string filename)
     if (this->load())
     {
         this->filename = formater("export_png_", &idx_png, ".png");
-        stbi_write_png(this->filename.c_str(), width, height, 1, data.data(), width);
+
+        stbi_write_png(this->filename.c_str(), width, height, channels, data.data(), width * channels);
         return true;
     }
     return false;
@@ -50,7 +48,8 @@ bool exporter::toJPEG(const std::string filename)
     if (this->load())
     {
         this->filename = formater("export_jpeg_", &idx_png, ".jpeg");
-        stbi_write_jpg(this->filename.c_str(), width, height, 1, data.data(), 80);
+
+        stbi_write_jpg(this->filename.c_str(), width, height, channels, data.data(), 80);
         return true;
     }
     return false;
@@ -61,7 +60,7 @@ bool exporter::toBMP(const std::string filename)
     if (this->load())
     {
         this->filename = formater("export_bmp_", &idx_png, ".bmp");
-        stbi_write_bmp(this->filename.c_str(), width, height, 1, data.data());
+        stbi_write_bmp(this->filename.c_str(), width, height, channels, data.data());
         return true;
     }
 
@@ -70,10 +69,12 @@ bool exporter::toBMP(const std::string filename)
 
 void exporter::apply(const int format_idx, loader *loader, double scale)
 {
+    this->filename = loader->filename_path;
     switch (format_idx)
     {
     case PNG_FORMAT:
     {
+        std::cout << "Filename in png format apply function in exporter: " << loader->filename_path << std::endl;
         this->toPNG(loader->filename_path);
     }
     break;

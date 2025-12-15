@@ -35,7 +35,7 @@ typedef struct _exporter
     double scale = 1.0f;
 
     // Image parameters
-    int32_t width, height, channels;
+    int32_t width, height, channels, desired_channels = 4;
     std::vector<unsigned char> data;
 
     bool toPNG(const std::string filename);

@@ -149,7 +149,7 @@ int main(int, char **)
         if (fileDialog.HasSelected())
         {
             loader.texture_load(fileDialog.GetSelected().c_str(), sdl_vstate.renderer, &sdl_vstate.src);
-
+            std::cout << "Filename: " << fileDialog.GetSelected().c_str() <<  std::endl;
             //Init parameters to the texture
             center.init(&sdl_vstate);
 
@@ -172,6 +172,7 @@ int main(int, char **)
         menu_image.film_grain(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.emboss(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.gamma_correction(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.borders(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         
         //Info/Stats
         image_info.display(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
