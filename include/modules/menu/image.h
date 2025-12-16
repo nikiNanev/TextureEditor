@@ -23,6 +23,14 @@ typedef struct _menu_image
                 originator->save_action("Edge Enhancement filter");
             }
 
+            if (ImGui::MenuItem("Colorize"))
+            {
+                editor_vstate.filter.colorize = true;
+
+                caretaker->backup();
+                originator->save_action("Edge Enhancement filter");
+            }
+
             ImGui::Separator();
 
             if (ImGui::MenuItem("Blur"))
@@ -383,7 +391,7 @@ typedef struct _menu_image
                         message_vstate.init = true;
                         message_vstate.message = " Applied & Exported! ( Gamma Correction )";
                         prevGamma = gamma;
-                        is_applied = false;
+                        is_applied = true;
                     }
 
                     ImGui::CloseCurrentPopup();
@@ -524,6 +532,132 @@ typedef struct _menu_image
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_vstate.filter.borders = false;
+                    editor_vstate.is_processing = false;
+                    is_applied = false;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void colorize(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.colorize && loader.is_texture)
+        {
+            ImGui::OpenPopup("Colorize");
+
+            if (ImGui::BeginPopup("Colorize", ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Colorize");
+                ImGui::Separator();
+
+                static ImVec4 red_channel;
+                static ImVec4 green_channel;
+                static ImVec4 blue_channel;
+
+                static float sum = 0.0f;
+                static float prev_sum = sum;
+                static bool is_applied = false;
+
+                static float selectedColor_red[3] = {0, 0, 0};
+                static float selectedColor_green[3] = {0, 0, 0};
+                static float selectedColor_blue[3] = {0, 0, 0};
+
+                ImGui::ColorPicker3("Red Channel", selectedColor_red);
+                ImGui::ColorPicker3("Green Channel", selectedColor_green);
+                ImGui::ColorPicker3("Blue Channel", selectedColor_blue);
+
+                red_channel.x = selectedColor_red[0];
+                red_channel.y = selectedColor_red[1];
+                red_channel.z = selectedColor_red[2];
+
+                green_channel.x = selectedColor_green[0];
+                green_channel.y = selectedColor_green[1];
+                green_channel.z = selectedColor_green[2];
+
+                blue_channel.x = selectedColor_blue[0];
+                blue_channel.y = selectedColor_blue[1];
+                blue_channel.z = selectedColor_blue[2];
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.filter.colorize = false;
+                    editor_vstate.is_processing = false;
+
+                    if(prev_sum != sum)
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _colorize c;
+
+                        c.rgb[0] = (red_channel.x + red_channel.y + red_channel.z) / 3;
+                        c.rgb[1] = (green_channel.x + green_channel.y + green_channel.z) / 3;
+                        c.rgb[2] = (blue_channel.x + blue_channel.y + blue_channel.z) / 3;
+
+                        sum = c.rgb[0] + c.rgb[1] + c.rgb[2];
+
+                        // apply
+                        if (c.load(loader.filename_path, loader))
+                        {
+                            c.apply(loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Colorize )";
+
+                        is_applied = false;
+                        prev_sum = sum;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                // ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Apply", ImVec2(120, 0)))
+                {
+
+                    if(prev_sum != sum)
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _colorize c;
+
+                        c.rgb[0] = (red_channel.x + red_channel.y + red_channel.z) / 3;
+                        c.rgb[1] = (green_channel.x + green_channel.y + green_channel.z) / 3;
+                        c.rgb[2] = (blue_channel.x + blue_channel.y + blue_channel.z) / 3;
+
+                        sum = c.rgb[0] + c.rgb[1] + c.rgb[2];
+
+                        // apply
+                        if (c.load(loader.filename_path, loader))
+                        {
+                            c.apply(loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Colorize )";
+
+                        is_applied = false;
+                        prev_sum = sum;
+                    }
+                }
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.colorize = false;
                     editor_vstate.is_processing = false;
                     is_applied = false;
                     ImGui::CloseCurrentPopup();

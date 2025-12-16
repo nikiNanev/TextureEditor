@@ -30,6 +30,7 @@ typedef struct filters
 {
     bool blur{false};
     bool borders{false};
+    bool colorize{false};
 
     bool edge_enhancement{false};
     bool high_pass{false};

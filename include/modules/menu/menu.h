@@ -16,7 +16,7 @@
 #include "filters/emboss.h"
 #include "filters/gamma_correction.h"
 #include "filters/borders.h"
-
+#include "filters/colorize.h"
 
 #include "states/memento/memento.h"
 #include "states/editor_state.h"
