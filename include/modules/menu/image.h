@@ -72,6 +72,11 @@ typedef struct _menu_image
                 editor_vstate.filter.binary_thresholds = true;
             }
 
+            if (ImGui::MenuItem("Invert"))
+            {
+                editor_vstate.filter.invert = true;
+            }
+
             if (ImGui::MenuItem("Film Grain"))
             {
                 editor_vstate.filter.film_grain = true;
@@ -665,6 +670,29 @@ typedef struct _menu_image
             }
 
             ImGui::EndPopup();
+        }
+    }
+
+
+    void invert(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.invert && loader.is_texture)
+        {
+            _invert invert;
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            if (invert.load(loader.filename_path, loader))
+            {
+                invert.apply(loader, &sdl_vstate);
+
+                message_vstate.init = true;
+                message_vstate.message = "Applied & Exported! ( Inverted )";
+
+                editor_vstate.filter.invert = false;
+            }
+
+            editor_vstate.filter.invert = false;
         }
     }
 
