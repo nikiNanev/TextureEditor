@@ -35,6 +35,7 @@ typedef struct filters
     bool edge_enhancement{false};
     bool high_pass{false};
     bool brightness_adjustment{false};
+    bool contrast_adjustment{false};
 
     bool binary_thresholds{false};
     bool film_grain{false};

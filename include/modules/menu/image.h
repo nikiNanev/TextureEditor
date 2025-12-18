@@ -65,6 +65,14 @@ typedef struct _menu_image
                 originator->save_action("Brightness Adjustment");
             }
 
+            if (ImGui::MenuItem("Contrast Adjustment"))
+            {
+                editor_vstate.filter.contrast_adjustment = true;
+
+                caretaker->backup();
+                originator->save_action("Contrast Adjustment");
+            }
+
             ImGui::Separator();
 
             if (ImGui::MenuItem("Binary Thresholds"))
@@ -223,6 +231,59 @@ typedef struct _menu_image
                 editor_vstate.filter.brightness_adjustment = false;
             }
             editor_vstate.filter.brightness_adjustment = false;
+        }
+    }
+
+    void contrast_adjustment(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.contrast_adjustment && loader.is_texture)
+        {
+            ImGui::OpenPopup("Contrast Adjustment");
+
+            if (ImGui::BeginPopupModal("Contrast Adjustment", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Contrast Adjustment");
+                ImGui::Separator();
+
+                _contrast_adjustment contrast_adjustment;
+
+                static float factor{0.0f};
+
+                ImGui::SliderFloat("Contrast Factor", &factor, -255.0f, 255.0f);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+
+                    if (contrast_adjustment.load(loader.filename_path, loader))
+                    {
+
+                        factor = (259.0f * (factor + 255)) / (255.0f * (259 - factor));
+
+                        contrast_adjustment.apply(factor, loader, &sdl_vstate);
+
+                        caretaker->backup(); // Success on export
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        message_vstate.init = true;
+                        message_vstate.message = "Applied & Exported! ( Contrast Adjustment )";
+
+                        editor_vstate.filter.contrast_adjustment = false;
+                        editor_vstate.is_processing = false;
+                    }
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.contrast_adjustment = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         }
     }
 

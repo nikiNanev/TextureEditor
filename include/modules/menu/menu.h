@@ -10,6 +10,7 @@
 #include "filters/blur.h"
 #include "filters/edge_enhancement.h"
 #include "filters/brightness_adjustment.h"
+#include "filters/contrast_adjustment.h"
 #include "filters/binary_thresholds.h"
 #include "filters/film_grain.h"
 #include "filters/high_pass.h"
