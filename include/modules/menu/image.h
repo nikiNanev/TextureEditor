@@ -105,6 +105,11 @@ typedef struct _menu_image
                 editor_vstate.filter.gamma_correction = true;
             }
 
+            if (ImGui::MenuItem("Posterization"))
+            {
+                editor_vstate.filter.posterization = true;
+            }
+
             ImGui::SeparatorText("Stats");
 
             if (ImGui::MenuItem("General Info"))
@@ -780,6 +785,98 @@ typedef struct _menu_image
             }
 
             editor_vstate.filter.grayscale = false;
+        }
+    }
+
+    void posterization(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.posterization && loader.is_texture)
+        {
+            ImGui::OpenPopup("Posterization");
+
+            static int flags = ImGuiWindowFlags_AlwaysAutoResize;
+
+            if (ImGui::BeginPopup("Posterization", flags))
+            {
+                ImGui::Text("Posterization");
+                ImGui::Separator();
+
+                static int levels = 0;
+                static int prev_levels = levels;
+                static bool is_applied = false;
+
+                ImGui::SliderInt("Levels", &levels, 2, 256);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+
+                    editor_vstate.filter.posterization = false;
+                    editor_vstate.is_processing = false;
+
+                    if (prev_levels != levels)
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _posterization p;
+
+                        // apply
+                        if (p.load(loader.filename_path, loader))
+                        {
+                            p.apply(levels, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Posterization )";
+                        prev_levels = levels;
+                        is_applied = true;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Apply", ImVec2(120, 0)))
+                {
+                    if (prev_levels != levels)
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _posterization p;
+
+                        // apply
+                        if (p.load(loader.filename_path, loader))
+                        {
+                            p.apply(levels, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Posterization )";
+
+                        is_applied = true;
+                        prev_levels = levels;
+                    }
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.posterization = false;
+                    editor_vstate.is_processing = false;
+                    is_applied = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         }
     }
 

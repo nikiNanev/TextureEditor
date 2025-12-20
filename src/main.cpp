@@ -173,6 +173,7 @@ int main(int, char **)
         menu_image.film_grain(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.emboss(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.gamma_correction(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.posterization(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.borders(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.colorize(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.invert(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);

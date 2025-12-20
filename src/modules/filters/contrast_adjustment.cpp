@@ -35,6 +35,7 @@ bool contrast_adjustment::apply(const float &contrast_factor, loader &loader, sd
             }
         }
     }
+    
     counter++;
     exporter exporter;
     std::string filename = exporter.formater("export_contrast_adjustment_", &counter, ".png");

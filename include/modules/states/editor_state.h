@@ -44,6 +44,7 @@ typedef struct filters
     bool gamma_correction{false};
     bool invert{false};
     bool grayscale{false};
+    bool posterization{false};
 } filters;
 
 typedef struct _export_state

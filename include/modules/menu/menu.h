@@ -20,6 +20,7 @@
 #include "filters/colorize.h"
 #include "filters/invert.h"
 #include "filters/grayscale.h"
+#include "filters/posterization.h"
 
 
 #include "states/memento/memento.h"
