@@ -11,10 +11,13 @@
 #include "filters/edge_enhancement.h"
 #include "filters/brightness_adjustment.h"
 #include "filters/contrast_adjustment.h"
+#include "filters/exposure_adjustment.h"
+
 #include "filters/binary_thresholds.h"
 #include "filters/film_grain.h"
 #include "filters/high_pass.h"
 #include "filters/emboss.h"
+
 #include "filters/gamma_correction.h"
 #include "filters/borders.h"
 #include "filters/colorize.h"

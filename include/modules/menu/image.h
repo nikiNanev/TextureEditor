@@ -73,6 +73,14 @@ typedef struct _menu_image
                 originator->save_action("Contrast Adjustment");
             }
 
+            if (ImGui::MenuItem("Exposure Adjustment"))
+            {
+                editor_vstate.filter.exposure_adjustment = true;
+
+                caretaker->backup();
+                originator->save_action("Exposure Adjustment");
+            }
+
             ImGui::Separator();
 
             if (ImGui::MenuItem("Binary Thresholds"))
@@ -121,11 +129,11 @@ typedef struct _menu_image
         }
     }
 
-    void filter_blur(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    void gaussian_blur(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
     {
         if (editor_vstate.filter.blur && loader.is_texture)
         {
-            blur blur;
+            blur b;
             editor_vstate.is_processing = true;
 
             ImGui::OpenPopup("Blur");
@@ -143,11 +151,12 @@ typedef struct _menu_image
                 {
                     editor_vstate.filter.blur = false;
                     editor_vstate.is_processing = false;
+
                     caretaker->backup();
                     originator->save_snapshot(loader.texture, loader.filename_path);
 
-                    if (blur.load(loader.filename_path, loader))
-                        blur.apply(sigma, loader, &sdl_vstate);
+                    if (b.load(loader.filename_path, loader))
+                        b.apply(sigma, loader, &sdl_vstate);
 
                     message_vstate.init = true;
                     message_vstate.message = " Applied & Exported! ( Blur )";
@@ -871,6 +880,99 @@ typedef struct _menu_image
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_vstate.filter.posterization = false;
+                    editor_vstate.is_processing = false;
+                    is_applied = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+    }
+
+    void exposure_adjustment(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.exposure_adjustment && loader.is_texture)
+        {
+            ImGui::OpenPopup("Exposure Adjustment");
+
+            static int flags = ImGuiWindowFlags_AlwaysAutoResize;
+
+            if (ImGui::BeginPopup("Exposure Adjustment", flags))
+            {
+                ImGui::Text("Exposure Adjustment");
+                ImGui::Separator();
+
+                static float factor = 0;
+                static float prev_factor = factor;
+                static bool is_applied = false;
+
+                ImGui::SliderFloat("Factor", &factor, 0, 2, "%.3f");
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+
+                    editor_vstate.filter.exposure_adjustment = false;
+                    editor_vstate.is_processing = false;
+
+                    if (prev_factor != factor)
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _exposure_adjustment ea;
+
+                        // apply
+                        if (ea.load(loader.filename_path, loader))
+                        {
+                            ea.apply(factor, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Exposure Adjustment )";
+                        prev_factor = factor;
+                        is_applied = true;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                // ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Apply", ImVec2(120, 0)))
+                {
+                    if (prev_factor != factor)
+                        is_applied = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _exposure_adjustment ea;
+
+                        // apply
+                        if (ea.load(loader.filename_path, loader))
+                        {
+                            ea.apply(factor, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Exposure Adjustment )";
+
+                        is_applied = true;
+                        prev_factor = factor;
+                    }
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.exposure_adjustment = false;
                     editor_vstate.is_processing = false;
                     is_applied = false;
                     ImGui::CloseCurrentPopup();
