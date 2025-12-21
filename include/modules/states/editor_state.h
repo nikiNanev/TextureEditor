@@ -46,6 +46,10 @@ typedef struct filters
     bool invert{false};
     bool grayscale{false};
     bool posterization{false};
+
+    bool duotone{false};
+    bool tritone{false};
+    
 } filters;
 
 typedef struct _export_state

@@ -25,6 +25,8 @@
 #include "filters/grayscale.h"
 #include "filters/posterization.h"
 
+#include "filters/tritone.h"
+
 
 #include "states/memento/memento.h"
 #include "states/editor_state.h"

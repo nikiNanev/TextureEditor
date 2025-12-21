@@ -118,6 +118,18 @@ typedef struct _menu_image
                 editor_vstate.filter.posterization = true;
             }
 
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Duotone"))
+            {
+                editor_vstate.filter.duotone = true;
+            }
+
+            if (ImGui::MenuItem("Tritone"))
+            {
+                editor_vstate.filter.tritone = true;
+            }
+
             ImGui::SeparatorText("Stats");
 
             if (ImGui::MenuItem("General Info"))
@@ -979,6 +991,255 @@ typedef struct _menu_image
                 }
                 ImGui::EndPopup();
             }
+        }
+    }
+
+    void duotone(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.duotone && loader.is_texture)
+        {
+            ImGui::OpenPopup("Duotone");
+
+            if (ImGui::BeginPopup("Duotone", ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Duotone");
+                ImGui::Separator();
+
+                static bool is_applied = false;
+
+                static float shadow_select[3] = {0, 0, 0};
+                static float highlight_select[3] = {0, 0, 0};
+
+                ImGui::ColorPicker3("Shadow", shadow_select);
+                ImGui::ColorPicker3("Highlight", highlight_select);
+
+                static unsigned char shadow_color[3];
+                static unsigned char highlight_color[3];
+
+                for (int i = 0; i < 3; i++)
+                {
+                    shadow_color[i] = (unsigned char)(shadow_select[i] * 256.f);
+                    highlight_color[i] = (unsigned char)(highlight_select[i] * 256.f);
+                }
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.filter.duotone = false;
+                    editor_vstate.is_processing = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _duotone d;
+
+                        color shadow;
+                        color highlight;
+
+                        shadow.r = shadow_color[0];
+                        shadow.g = shadow_color[1];
+                        shadow.b = shadow_color[2];
+
+                        highlight.r = highlight_color[0];
+                        highlight.g = highlight_color[1];
+                        highlight.b = highlight_color[2];
+
+                        // apply
+                        if (d.load(loader.filename_path, loader))
+                        {
+                            d.apply(shadow, highlight, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Duotone )";
+
+                        is_applied = false;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                // ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Apply", ImVec2(120, 0)))
+                {
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _duotone d;
+
+                        color shadow;
+                        color highlight;
+
+                        shadow.r = shadow_color[0];
+                        shadow.g = shadow_color[1];
+                        shadow.b = shadow_color[2];
+
+                        highlight.r = highlight_color[0];
+                        highlight.g = highlight_color[1];
+                        highlight.b = highlight_color[2];
+
+                        // apply
+                        if (d.load(loader.filename_path, loader))
+                        {
+                            d.apply(shadow, highlight, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Duotone )";
+
+                        is_applied = false;
+                    }
+                }
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.duotone = false;
+                    editor_vstate.is_processing = false;
+                    is_applied = false;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void tritone(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.tritone && loader.is_texture)
+        {
+            ImGui::OpenPopup("Tritone");
+
+            if (ImGui::BeginPopup("Tritone", ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Tritone");
+                ImGui::Separator();
+
+                static bool is_applied = false;
+
+                static float shadow_select[3] = {0, 0, 0};
+                static float mid_select[3] = {0, 0, 0};
+                static float highlight_select[3] = {0, 0, 0};
+
+                ImGui::ColorPicker3("Shadow", shadow_select);
+                ImGui::ColorPicker3("Mid", mid_select);
+                ImGui::ColorPicker3("Highlight", highlight_select);
+
+                static unsigned char shadow_color[3];
+                static unsigned char mid_color[3];
+                static unsigned char highlight_color[3];
+
+                for (int i = 0; i < 3; i++)
+                {
+                    shadow_color[i] = (unsigned char)(shadow_select[i] * 256.f);
+                    mid_color[i] = (unsigned char)(mid_select[i] * 256.f);
+                    highlight_color[i] = (unsigned char)(highlight_select[i] * 256.f);
+                }
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+
+                    editor_vstate.filter.tritone = false;
+                    editor_vstate.is_processing = false;
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _tritone t;
+
+                        color shadow;
+                        color mid;
+                        color highlight;
+
+                        shadow.r = shadow_color[0];
+                        shadow.g = shadow_color[1];
+                        shadow.b = shadow_color[2];
+
+                        mid.r = mid_color[0];
+                        mid.g = mid_color[1];
+                        mid.b = mid_color[2];
+
+                        highlight.r = highlight_color[0];
+                        highlight.g = highlight_color[1];
+                        highlight.b = highlight_color[2];
+
+                        // apply
+                        if (t.load(loader.filename_path, loader))
+                        {
+                            t.apply(shadow, mid, highlight, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Tritone )";
+
+                        is_applied = false;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                // ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Apply", ImVec2(120, 0)))
+                {
+
+                    if (!is_applied)
+                    {
+                        caretaker->backup();
+                        originator->save_snapshot(loader.texture, loader.filename_path);
+
+                        _tritone t;
+
+                        color shadow;
+                        color mid;
+                        color highlight;
+
+                        shadow.r = shadow_color[0];
+                        shadow.g = shadow_color[1];
+                        shadow.b = shadow_color[2];
+
+                        mid.r = mid_color[0];
+                        mid.g = mid_color[1];
+                        mid.b = mid_color[2];
+
+                        highlight.r = highlight_color[0];
+                        highlight.g = highlight_color[1];
+                        highlight.b = highlight_color[2];
+
+                        // apply
+                        if (t.load(loader.filename_path, loader))
+                        {
+                            t.apply(shadow, mid, highlight, loader, &sdl_vstate);
+                        }
+
+                        message_vstate.init = true;
+                        message_vstate.message = " Applied & Exported! ( Tritone )";
+
+                        is_applied = false;
+                    }
+                }
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.tritone = false;
+                    editor_vstate.is_processing = false;
+                    is_applied = false;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndPopup();
         }
     }
 

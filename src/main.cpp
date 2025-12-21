@@ -167,6 +167,10 @@ int main(int, char **)
         menu_image.edge_enhancement(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.high_pass(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.brightness_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.duotone(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.tritone(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+
+
         menu_image.contrast_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.exposure_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
