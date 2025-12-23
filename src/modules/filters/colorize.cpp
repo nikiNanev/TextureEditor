@@ -1,5 +1,5 @@
 #include "filters/colorize.h"
-
+#include "logger/profiler.h"
 
 bool colorize::load(const std::string &filename, loader &loader)
 {
@@ -9,11 +9,17 @@ bool colorize::load(const std::string &filename, loader &loader)
 bool colorize::apply(loader &loader, sdl_state *sdl_pstate)
 {
 
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Colorize";
+
     int pixel_index{0};
 
     int width = loader.width;
     int height = loader.height;
     int channels = loader.channels;
+
+    p.start = p.start_timer();
 
     for (int i = 0; i < height; ++i)
     {
@@ -27,9 +33,13 @@ bool colorize::apply(loader &loader, sdl_state *sdl_pstate)
         }
     }
 
+    p.end = p.end_timer();
+
     static int counter = 0;
 
     counter++;
+    p.report("report_colorize_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_colorized_", &counter, ".png");
 

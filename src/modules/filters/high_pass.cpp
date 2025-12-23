@@ -1,4 +1,5 @@
 #include "filters/high_pass.h"
+#include "logger/profiler.h"
 
 bool high_pass::load(const std::string &filename, loader &loader)
 {
@@ -7,6 +8,10 @@ bool high_pass::load(const std::string &filename, loader &loader)
 
 bool high_pass::apply(loader &loader, sdl_state *sdl_pstate)
 {
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "High Pass";
+
     static int counter = 0;
 
     int idx{0};
@@ -22,6 +27,8 @@ bool high_pass::apply(loader &loader, sdl_state *sdl_pstate)
             {0, -1, 0},
             {-1, 5, -1},
             {0, -1, 0}};
+
+    p.start = p.start_timer();
 
     for (int y = 0; y < height; y++)
     {
@@ -67,8 +74,11 @@ bool high_pass::apply(loader &loader, sdl_state *sdl_pstate)
             output[out_idx + 2] = (unsigned char)out_b;
         }
     }
+    p.end = p.end_timer();
 
     counter++;
+    p.report("report_high_pass_" + std::to_string(counter) + ".txt");
+    
     exporter exporter;
     std::string filename = exporter.formater("export_high_pass_", &counter, ".png");
 

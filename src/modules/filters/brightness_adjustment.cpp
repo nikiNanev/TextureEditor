@@ -1,4 +1,5 @@
 #include "filters/brightness_adjustment.h"
+#include "logger/profiler.h"
 
 bool brightness_adjustment::load(const std::string &filename, loader &loader)
 {
@@ -7,6 +8,9 @@ bool brightness_adjustment::load(const std::string &filename, loader &loader)
 
 bool brightness_adjustment::apply(const float &alpha, const int &beta, loader &loader, sdl_state *sdl_pstate)
 {
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Brightness Adjustment";
 
     static int counter = 0;
 
@@ -15,6 +19,8 @@ bool brightness_adjustment::apply(const float &alpha, const int &beta, loader &l
     int width = loader.width;
     int height = loader.height;
     int channels = loader.channels;
+
+    p.start = p.start_timer();
 
     if (channels >= 3)
     {
@@ -30,7 +36,11 @@ bool brightness_adjustment::apply(const float &alpha, const int &beta, loader &l
             }
         }
     }
+    p.end = p.end_timer();
+
     counter++;
+    p.report("report_brightness_adjustment_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_brightness_adjustment_", &counter, ".png");
 

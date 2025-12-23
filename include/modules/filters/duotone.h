@@ -1,6 +1,7 @@
 #include "textures/exporter.h"
 #include "textures/loader.h"
 #include "states/editor_state.h"
+#include "logger/profiler.h"
 
 typedef struct
 {

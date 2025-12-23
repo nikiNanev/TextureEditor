@@ -1,4 +1,5 @@
 #include "filters/contrast_adjustment.h"
+#include "logger/profiler.h"
 
 bool contrast_adjustment::load(const std::string &filename, loader &loader)
 {
@@ -12,6 +13,11 @@ static unsigned char clamp(int value)
 
 bool contrast_adjustment::apply(const float &contrast_factor, loader &loader, sdl_state *sdl_pstate)
 {
+    // Profiling the time consumption in the function
+    profiler p;
+    p.function = "Contrast Adjustment";
+
+    p.start = p.start_timer();
 
     static int counter = 0;
 
@@ -20,6 +26,8 @@ bool contrast_adjustment::apply(const float &contrast_factor, loader &loader, sd
     int width = loader.width;
     int height = loader.height;
     int channels = loader.channels;
+
+    p.start = p.start_timer();
 
     if (channels >= 3)
     {
@@ -35,8 +43,12 @@ bool contrast_adjustment::apply(const float &contrast_factor, loader &loader, sd
             }
         }
     }
-    
+
+    p.end = p.end_timer();
+
     counter++;
+    p.report("report_constrast_adjustment_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_contrast_adjustment_", &counter, ".png");
 

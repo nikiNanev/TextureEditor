@@ -1,4 +1,5 @@
 #include "filters/exposure_adjustment.h"
+#include "logger/profiler.h"
 
 static unsigned char clamp(int value)
 {
@@ -12,13 +13,20 @@ bool exposure_adjustment::load(const std::string &filename, loader &loader)
 
 bool exposure_adjustment::apply(float &exposure_factor, loader &loader, sdl_state *sdl_pstate)
 {
+
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Exposure Adjustment";
+
     int pixel_index{0};
 
     int width = loader.width;
     int height = loader.height;
     int channels = loader.channels;
 
-        if (channels >= 3)
+    p.start = p.start_timer();
+
+    if (channels >= 3)
     {
         for (int i = 0; i < height; ++i)
         {
@@ -32,10 +40,14 @@ bool exposure_adjustment::apply(float &exposure_factor, loader &loader, sdl_stat
             }
         }
     }
+    p.end = p.end_timer();
 
     static int counter = 0;
 
     counter++;
+
+    p.report("report_exposure_adjustment_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_exposure_adjustment_", &counter, ".png");
 

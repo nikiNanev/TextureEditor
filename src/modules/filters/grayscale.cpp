@@ -1,4 +1,5 @@
 #include "filters/grayscale.h"
+#include "logger/profiler.h"
 
 bool grayscale::load(const std::string &filename, loader &loader)
 {
@@ -8,6 +9,10 @@ bool grayscale::load(const std::string &filename, loader &loader)
 bool grayscale::apply(loader &loader, sdl_state *sdl_pstate)
 {
 
+     // Profile the time consumption in the function
+    profiler p;
+    p.function = "Grayscale";
+
     int pixel_index{0};
     int output_index{0};
 
@@ -16,6 +21,8 @@ bool grayscale::apply(loader &loader, sdl_state *sdl_pstate)
     int channels = loader.channels;
 
     std::vector<unsigned char> output_image(width * height);
+
+    p.start = p.start_timer();
 
     for (int i = 0; i < height; ++i)
     {
@@ -27,10 +34,13 @@ bool grayscale::apply(loader &loader, sdl_state *sdl_pstate)
             output_image[output_index] = static_cast<unsigned char>(0.2126 * pixels_data[pixel_index + 0] + 0.7152 * pixels_data[pixel_index + 1] + 0.0722 * pixels_data[pixel_index + 2] + 0.5f); // Rec. 709 ( HDTV ) Standard
         }
     }
+    p.end = p.end_timer();
 
     static int counter = 0;
 
     counter++;
+    p.report("report_grayscale_" + std::to_string(counter) + ".txt");
+    
     exporter exporter;
     std::string filename = exporter.formater("export_grayscale_", &counter, ".png");
 

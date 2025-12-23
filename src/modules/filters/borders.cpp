@@ -1,4 +1,5 @@
 #include "filters/borders.h"
+#include "logger/profiler.h"
 
 bool borders::load(const std::string &filename, loader &loader)
 {
@@ -7,6 +8,9 @@ bool borders::load(const std::string &filename, loader &loader)
 
 bool borders::apply(loader &loader, sdl_state *sdl_pstate, ImVec4 &color, int &width_border_pixels)
 {
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Borders";
 
     int pixel_index{0};
 
@@ -14,6 +18,7 @@ bool borders::apply(loader &loader, sdl_state *sdl_pstate, ImVec4 &color, int &w
     int height = loader.height;
     int channels = loader.channels;
 
+    p.start = p.start_timer();
     for (int i = 0; i < height; ++i)
     {
         for (int j = 0; j < width; ++j)
@@ -29,10 +34,14 @@ bool borders::apply(loader &loader, sdl_state *sdl_pstate, ImVec4 &color, int &w
             }
         }
     }
+    p.end = p.end_timer();
 
     static int counter = 0;
 
     counter++;
+
+    p.report("report_borders_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_borders_", &counter, ".png");
 

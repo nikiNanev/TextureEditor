@@ -1,4 +1,5 @@
 #include "filters/edge_enhancement.h"
+#include "logger/profiler.h"
 
 bool edge_enhancement::load(const std::string &filename, loader &loader)
 {
@@ -7,6 +8,10 @@ bool edge_enhancement::load(const std::string &filename, loader &loader)
 
 bool edge_enhancement::apply(loader &loader, sdl_state *sdl_pstate)
 {
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Edge Enhancement";
+
     static int counter = 0;
 
     int idx{0};
@@ -25,6 +30,7 @@ bool edge_enhancement::apply(loader &loader, sdl_state *sdl_pstate)
 
     float sum{0.0f};
 
+    p.start = p.start_timer();
     for (int i = 1; i < width - 1; i++)
     {
         for (int j = 1; j < height - 1; j++)
@@ -48,8 +54,11 @@ bool edge_enhancement::apply(loader &loader, sdl_state *sdl_pstate)
             output[i * width + j] = (unsigned char)new_value;
         }
     }
+    p.end = p.end_timer();
 
     counter++;
+    p.report("report_edge_enhancement_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_edge_enhance_", &counter, ".png");
 

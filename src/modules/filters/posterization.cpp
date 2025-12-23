@@ -1,4 +1,5 @@
 #include "filters/posterization.h"
+#include "logger/profiler.h"
 
 bool posterization::load(const std::string &filename, loader &loader)
 {
@@ -7,6 +8,9 @@ bool posterization::load(const std::string &filename, loader &loader)
 
 bool posterization::apply(const uint8_t &levels, loader &loader, sdl_state *sdl_pstate)
 {
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Posterization";
 
     static int counter = 0;
 
@@ -16,6 +20,7 @@ bool posterization::apply(const uint8_t &levels, loader &loader, sdl_state *sdl_
     int height = loader.height;
     int channels = loader.channels;
 
+    p.start = p.start_timer();
     if (channels >= 3)
     {
         int step = 256 / levels;
@@ -31,8 +36,11 @@ bool posterization::apply(const uint8_t &levels, loader &loader, sdl_state *sdl_
             }
         }
     }
+    p.end = p.end_timer();
 
     counter++;
+    p.report("report_posterization_" + std::to_string(counter) + ".txt");
+    
     exporter exporter;
     std::string filename = exporter.formater("export_posterization_", &counter, ".png");
 

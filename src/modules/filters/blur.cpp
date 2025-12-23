@@ -1,4 +1,5 @@
 #include "filters/blur.h"
+#include "logger/profiler.h"
 
 #ifndef IIR_GAUSS_BLUR_IMPLEMENTATION
 #define IIR_GAUSS_BLUR_IMPLEMENTATION
@@ -13,13 +14,20 @@ bool blur::load(const std::string &filename, loader &loader)
 
 bool blur::apply(const float &sigma, loader &loader, sdl_state *sdl_pstate)
 {
-    int pixel_index{0};
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Blur (Gaussian)";
 
+    p.start = p.start_timer();
     iir_gauss_blur(loader.width, loader.height, loader.channels, pixels_data.data(), sigma);
+    p.end = p.end_timer();
 
     static int counter = 0;
 
     counter++;
+    
+    p.report("report_gaussian_blur_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_gaussian_blur_", &counter, ".png");
 

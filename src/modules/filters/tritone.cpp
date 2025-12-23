@@ -12,11 +12,18 @@ bool tritone::load(const std::string &filename, loader &loader)
 
 bool tritone::apply(color &shadow, color &mid, color &highlight, loader &loader, sdl_state *sdl_pstate)
 {
+
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Tritone";
+
     int pixel_index{0};
 
     int width = loader.width;
     int height = loader.height;
     int channels = loader.channels;
+
+    p.start = p.start_timer();
 
     if (channels >= 3)
     {
@@ -56,10 +63,13 @@ bool tritone::apply(color &shadow, color &mid, color &highlight, loader &loader,
             }
         }
     }
+    p.end = p.end_timer();
 
     static int counter = 0;
-
     counter++;
+
+    p.report("report_tritone_" + std::to_string(counter) + ".txt");
+
     exporter exporter;
     std::string filename = exporter.formater("export_tritone_", &counter, ".png");
 

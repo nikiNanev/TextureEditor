@@ -12,6 +12,11 @@ bool duotone::load(const std::string &filename, loader &loader)
 
 bool duotone::apply(color &shadow, color &highlight, loader &loader, sdl_state *sdl_pstate)
 {
+    // Profiling the time consumption of the function
+    profiler p;
+    p.function = "Duotone";
+    p.start = p.start_timer();
+
     int pixel_index{0};
 
     int width = loader.width;
@@ -43,9 +48,16 @@ bool duotone::apply(color &shadow, color &highlight, loader &loader, sdl_state *
         }
     }
 
+    p.end = p.end_timer();
+    // End of the profiling
+
     static int counter = 0;
 
     counter++;
+
+    p.report("report_duotone_" + std::to_string(counter) + ".txt");
+    std::cout << "Done Writing!" << std::endl;
+
     exporter exporter;
     std::string filename = exporter.formater("export_duotone_", &counter, ".png");
 

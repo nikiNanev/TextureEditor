@@ -1,4 +1,5 @@
 #include "filters/film_grain.h"
+#include "logger/profiler.h"
 
 bool film_grain::load(const std::string &filename, loader &loader)
 {
@@ -7,6 +8,9 @@ bool film_grain::load(const std::string &filename, loader &loader)
 
 bool film_grain::apply(loader &loader, sdl_state *sdl_pstate, int &strength)
 {
+    // Profile the time consumption in the function
+    profiler p;
+    p.function = "Film Grain";
 
     std::srand(std::time(nullptr));
 
@@ -16,6 +20,8 @@ bool film_grain::apply(loader &loader, sdl_state *sdl_pstate, int &strength)
     int height = loader.height;
     int channels = loader.channels;
 
+    p.start = p.start_timer();
+    
     if (channels >= 3)
     {
         for (int i = 0; i < width; ++i)
@@ -35,10 +41,12 @@ bool film_grain::apply(loader &loader, sdl_state *sdl_pstate, int &strength)
             }
         }
     }
+    p.end = p.end_timer();
 
     static int counter = 0;
 
     counter++;
+    p.report("report_film_grain_" + std::to_string(counter) + ".txt");
     exporter exporter;
     std::string filename = exporter.formater("export_film_grain_", &counter, ".png");
 
