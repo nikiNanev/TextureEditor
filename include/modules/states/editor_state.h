@@ -40,6 +40,7 @@ typedef struct filters
 
     bool binary_thresholds{false};
     bool film_grain{false};
+    bool color_noise{false};
 
     bool emboss{false};
     bool gamma_correction{false};

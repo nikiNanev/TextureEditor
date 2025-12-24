@@ -24,6 +24,7 @@
 #include "filters/invert.h"
 #include "filters/grayscale.h"
 #include "filters/posterization.h"
+#include "filters/color_noise.h"
 
 #include "filters/tritone.h"
 

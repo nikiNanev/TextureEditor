@@ -103,6 +103,11 @@ typedef struct _menu_image
                 editor_vstate.filter.film_grain = true;
             }
 
+            if (ImGui::MenuItem("Color Noise"))
+            {
+                editor_vstate.filter.color_noise = true;
+            }
+
             if (ImGui::MenuItem("Emboss"))
             {
                 editor_vstate.filter.emboss = true;
@@ -414,6 +419,66 @@ typedef struct _menu_image
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_vstate.filter.film_grain = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+    }
+
+    void color_noise(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.color_noise && loader.is_texture)
+        {
+            ImGui::OpenPopup("Color Noise");
+
+            if (ImGui::BeginPopupModal("Color Noise", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Color Noise");
+                ImGui::Separator();
+
+                static float intensity{0.0f};
+
+                static float color[3];
+
+                ImGui::SliderFloat("Intensity", &intensity, 0, 100, "%.4f");
+                ImGui::ColorPicker3("Color Noise", color);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.filter.color_noise = false;
+                    editor_vstate.is_processing = false;
+
+                    caretaker->backup();
+                    originator->save_snapshot(loader.texture, loader.filename_path);
+
+                    _color_noise cn;
+
+                    // apply
+                    if (cn.load(loader.filename_path, loader))
+                    {
+                        cn.color.r = color[0] * 256.f;
+                        cn.color.g = color[1] * 256.f;
+                        cn.color.b = color[2] * 256.f;
+
+                        cn.intensity = intensity;
+
+                        cn.apply(loader, &sdl_vstate);
+                    }
+
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied & Exported! ( Color Noise )";
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.color_noise = false;
                     editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
