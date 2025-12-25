@@ -44,6 +44,7 @@ typedef struct filters
 
     bool emboss{false};
     bool gamma_correction{false};
+    bool white_correction{false};
     bool invert{false};
     bool grayscale{false};
     bool posterization{false};

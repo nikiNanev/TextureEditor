@@ -185,6 +185,7 @@ int main(int, char **)
         menu_image.borders(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.colorize(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.invert(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.white_correction(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.grayscale(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         //Info/Stats

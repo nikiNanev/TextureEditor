@@ -118,6 +118,11 @@ typedef struct _menu_image
                 editor_vstate.filter.gamma_correction = true;
             }
 
+            if (ImGui::MenuItem("White Correction"))
+            {
+                editor_vstate.filter.white_correction = true;
+            }
+
             if (ImGui::MenuItem("Posterization"))
             {
                 editor_vstate.filter.posterization = true;
@@ -1056,6 +1061,28 @@ typedef struct _menu_image
                 }
                 ImGui::EndPopup();
             }
+        }
+    }
+
+    void white_correction(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.white_correction && loader.is_texture)
+        {
+            _white_correction white_correction;
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            if (white_correction.load(loader.filename_path, loader))
+            {
+                white_correction.apply(loader, &sdl_vstate);
+
+                message_vstate.init = true;
+                message_vstate.message = "Applied & Exported! ( White Correction )";
+
+                editor_vstate.filter.white_correction = false;
+            }
+
+            editor_vstate.filter.white_correction = false;
         }
     }
 
