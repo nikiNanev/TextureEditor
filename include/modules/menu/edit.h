@@ -55,10 +55,15 @@ typedef struct _menu_edit
                 ImGui::Text("Resizing of the main texture");
                 ImGui::Separator();
 
-                static float width{0.0f}, height{0.0f};
+                static float width{sdl_vstate.dst.w}, height{sdl_vstate.dst.h};
 
-                ImGui::SliderFloat("Width", &width, 0.0f, 2500.0f);
-                ImGui::SliderFloat("Height", &height, 0.0f, 2500.0f);
+                // ImGui::SliderScalar
+
+                ImGui::SliderFloat("Width", &width, 0.0f, 1600.0f);
+                ImGui::SliderFloat("Height", &height, 0.0f, 1600.0f);
+
+                sdl_vstate.dst.w = width;
+                sdl_vstate.dst.h = height;
 
                 if (ImGui::Button("Ok", ImVec2(60, 0)))
                 {

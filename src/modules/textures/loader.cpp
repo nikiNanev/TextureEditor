@@ -36,7 +36,7 @@ bool loader::image_load(const char *filename, std::vector<unsigned char> &pixels
         // desired_channels is 0 if we kept original, otherwise it's the forced value
         channels = desired_channels != 0 ? desired_channels : channels;
 
-        size_t size = static_cast<size_t>(width) * height * channels;
+        size = static_cast<size_t>(width) * height * channels;
         pixels_data.assign(loaded_data, loaded_data + size);
 
         // Free the memory allocated by stb_image

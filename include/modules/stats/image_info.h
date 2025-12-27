@@ -1,18 +1,5 @@
 #include "common.h"
 
-#ifndef STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-
-#include "stb_image.h"
-
-#endif
-
-#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
-#include "stb_image_write.h"
-
-#endif
 typedef struct _image_info
 {
 
@@ -22,47 +9,21 @@ typedef struct _image_info
         if (editor_vstate.image_state.general_info && loader.is_texture)
         {
 
-            int width, height, channels, actual_channels, desired_channels = 4;
-
-            unsigned char *loaded_data = stbi_load(
-                loader.filename_path.c_str(),
-                &width,
-                &height,
-                &channels,
-                desired_channels);
-
-            if (!loaded_data)
-            {
-                std::cout << "Failed to load image: " + loader.filename_path + " - " + stbi_failure_reason() << std::endl;
-            }
-
-            // desired_channels is 0 if we kept original, otherwise it's the forced value
-
-            actual_channels = desired_channels != 0 ? desired_channels : channels;
-
-            size_t size = static_cast<size_t>(width) * height * actual_channels;
-
-            // Free the memory allocated by stb_image
-            stbi_image_free(loaded_data);
-
-            // Update channels to reflect what we actually have
-            channels = actual_channels;
-
             ImGui::OpenPopup("Image Info");
 
             if (ImGui::BeginPopupModal("Image Info", NULL, ImGuiWindowFlags_AlwaysAutoResize))
             {
-                ImGui::SetWindowFontScale(1.5f);
+                ImGui::SetWindowFontScale(1.2f);
                 ImGui::Text("General Image Info");
                 ImGui::Separator();
 
                 ImGui::Text("Filename: %s", loader.filename_path.c_str());
-                ImGui::Text("Dimensions: %dx%d", width, height);
-                ImGui::Text("Size: %lu bytes ( %lu Kb)", size, (size / 1024));
-                ImGui::Text("Channels: %d", channels);
+                ImGui::Text("Dimensions: %dx%d", loader.width, loader.height);
+                ImGui::Text("Size: %lu bytes ( %lu Kb)", loader.size, (loader.size / 1024));
+                ImGui::Text("Channels: %d", loader.channels);
                 ImGui::SameLine();
-                ImGui::Text("( %s )", (channels == 1 ? "Gray" : channels == 2 ? "Gray+Alpha"
-                                                            : channels == 3   ? "RGB"
+                ImGui::Text("( %s )", (loader.channels == 1 ? "Gray" : loader.channels == 2 ? "Gray+Alpha"
+                                                            : loader.channels == 3   ? "RGB"
                                                                               : "RGBA"));
 
                 if (ImGui::Button("Ok", ImVec2(60, 0)))
@@ -72,19 +33,44 @@ typedef struct _image_info
 
                     caretaker->backup();
                     originator->save_snapshot(loader.texture, loader.filename_path);
-
-                    message_vstate.init = true;
-                    message_vstate.message = " General Info ";
-
+                    
                     ImGui::CloseCurrentPopup();
                 }
 
                 ImGui::SetItemDefaultFocus();
                 ImGui::SameLine();
 
+                static int counter = 0;
+
+                if (ImGui::Button("Export as txt", ImVec2(170, 0)))
+                {
+                    std::ofstream output_txt("../reports/general_image_info_" + std::to_string(counter++) + ".txt"); // Opens (or creates) example.txt for writing
+
+                    if (!output_txt)
+                    {
+                        std::cerr << "Error: Could not open file for writing!" << std::endl;
+                    }
+
+                    output_txt << "Image General info\n\n";
+                    output_txt << "Filename: " << loader.filename_path.c_str() << "\n";
+                    output_txt << "Dimensions: " << loader.width << "x" << loader.height << "\n";
+                    output_txt << "File size: " << loader.size << " bytes ( " << (loader.size / 1024) << " KB )\n";
+                    output_txt << "Channels: " << loader.channels << "\n";
+                    output_txt << "( " << (loader.channels == 1 ? "Gray" : loader.channels == 2 ? "Gray+Alpha"
+                                                                : loader.channels == 3   ? "RGB"
+                                                                                  : "RGBA")
+                               << " )\n";
+
+                    output_txt.close();
+                    message_vstate.init = true;
+                    message_vstate.message = "Success export to txt file";
+                }
+
+                ImGui::SameLine();
+
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
-                    editor_vstate.filter.blur = false;
+                    editor_vstate.image_state.general_info = false;
                     editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }

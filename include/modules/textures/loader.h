@@ -14,6 +14,8 @@ typedef struct _loader
 
     int width, height, channels;
 
+    size_t size{0};
+    std::vector<unsigned char> pixels_data;
     SDL_Texture *texture{NULL};
 
     bool is_texture{false};

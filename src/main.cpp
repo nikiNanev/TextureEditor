@@ -148,6 +148,7 @@ int main(int, char **)
 
         if (fileDialog.HasSelected())
         {
+            loader.image_load(fileDialog.GetSelected().c_str(), loader.pixels_data);
             loader.texture_load(fileDialog.GetSelected().c_str(), sdl_vstate.renderer, &sdl_vstate.src);
             std::cout << "Filename: " << fileDialog.GetSelected().c_str() <<  std::endl;
             //Init parameters to the texture

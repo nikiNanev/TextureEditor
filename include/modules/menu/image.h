@@ -13,15 +13,7 @@ typedef struct _menu_image
     {
         if (ImGui::BeginMenu("Image"))
         {
-            ImGui::SeparatorText("Filters");
-
-            if (ImGui::MenuItem("Borders"))
-            {
-                editor_vstate.filter.borders = true;
-
-                caretaker->backup();
-                originator->save_action("Edge Enhancement filter");
-            }
+            ImGui::SeparatorText("Colors");
 
             if (ImGui::MenuItem("Colorize"))
             {
@@ -31,31 +23,22 @@ typedef struct _menu_image
                 originator->save_action("Edge Enhancement filter");
             }
 
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Blur"))
+            if (ImGui::MenuItem("Duotone"))
             {
-                editor_vstate.filter.blur = true;
-
-                caretaker->backup();
-                originator->save_action("Blur filter");
+                editor_vstate.filter.duotone = true;
             }
 
-            if (ImGui::MenuItem("Edge Enhancement"))
+            if (ImGui::MenuItem("Tritone"))
             {
-                editor_vstate.filter.edge_enhancement = true;
-
-                caretaker->backup();
-                originator->save_action("Edge Enhancement filter");
+                editor_vstate.filter.tritone = true;
             }
 
-            if (ImGui::MenuItem("High Pass"))
+            if (ImGui::MenuItem("Posterization"))
             {
-                editor_vstate.filter.high_pass = true;
-
-                caretaker->backup();
-                originator->save_action("High pass filter");
+                editor_vstate.filter.posterization = true;
             }
+
+            ImGui::SeparatorText("Adjustment & Corrections");
 
             if (ImGui::MenuItem("Brightness Adjustment"))
             {
@@ -81,7 +64,61 @@ typedef struct _menu_image
                 originator->save_action("Exposure Adjustment");
             }
 
-            ImGui::Separator();
+            if (ImGui::MenuItem("Gamma Correction"))
+            {
+                editor_vstate.filter.gamma_correction = true;
+            }
+
+            if (ImGui::MenuItem("White Correction"))
+            {
+                editor_vstate.filter.white_correction = true;
+            }
+
+            ImGui::SeparatorText("Noises");
+
+            if (ImGui::MenuItem("Blur"))
+            {
+                editor_vstate.filter.blur = true;
+
+                caretaker->backup();
+                originator->save_action("Blur filter");
+            }
+
+            if (ImGui::MenuItem("Film Grain"))
+            {
+                editor_vstate.filter.film_grain = true;
+            }
+
+            if (ImGui::MenuItem("Color Noise"))
+            {
+                editor_vstate.filter.color_noise = true;
+            }
+
+            ImGui::SeparatorText("Others");
+
+            if (ImGui::MenuItem("Borders"))
+            {
+                editor_vstate.filter.borders = true;
+
+                caretaker->backup();
+                originator->save_action("borders");
+            }
+
+            if (ImGui::MenuItem("Edge Enhancement"))
+            {
+                editor_vstate.filter.edge_enhancement = true;
+
+                caretaker->backup();
+                originator->save_action("Edge Enhancement");
+            }
+
+            if (ImGui::MenuItem("High Pass"))
+            {
+                editor_vstate.filter.high_pass = true;
+
+                caretaker->backup();
+                originator->save_action("High pass filter");
+            }
 
             if (ImGui::MenuItem("Binary Thresholds"))
             {
@@ -98,46 +135,9 @@ typedef struct _menu_image
                 editor_vstate.filter.invert = true;
             }
 
-            if (ImGui::MenuItem("Film Grain"))
-            {
-                editor_vstate.filter.film_grain = true;
-            }
-
-            if (ImGui::MenuItem("Color Noise"))
-            {
-                editor_vstate.filter.color_noise = true;
-            }
-
             if (ImGui::MenuItem("Emboss"))
             {
                 editor_vstate.filter.emboss = true;
-            }
-
-            if (ImGui::MenuItem("Gamma Correction"))
-            {
-                editor_vstate.filter.gamma_correction = true;
-            }
-
-            if (ImGui::MenuItem("White Correction"))
-            {
-                editor_vstate.filter.white_correction = true;
-            }
-
-            if (ImGui::MenuItem("Posterization"))
-            {
-                editor_vstate.filter.posterization = true;
-            }
-
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Duotone"))
-            {
-                editor_vstate.filter.duotone = true;
-            }
-
-            if (ImGui::MenuItem("Tritone"))
-            {
-                editor_vstate.filter.tritone = true;
             }
 
             ImGui::SeparatorText("Stats");
