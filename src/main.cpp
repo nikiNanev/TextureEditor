@@ -83,6 +83,8 @@ int main(int, char **)
     flip flip;
     center center;
 
+    control control;
+
     while (!done)
     {
         SDL_Event event;
@@ -114,6 +116,8 @@ int main(int, char **)
                     rotations.controls(event, center.angle, factor_angle, add_wait_seconds, message_vstate);
                     flip.controls(event, message_vstate, add_wait_seconds);
                     center.controls(event, message_vstate, &center.point, loader.texture, &sdl_vstate);
+
+                    control.activate_resize(event, message_vstate, editor_vstate);
                 }
 
                 if (event.key.key == SDLK_Z && left_cntrl_holded)
@@ -178,6 +182,7 @@ int main(int, char **)
 
         menu_image.binary_thresholds(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.film_grain(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.vintage(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.color_noise(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         menu_image.emboss(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);

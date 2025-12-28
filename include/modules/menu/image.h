@@ -94,6 +94,11 @@ typedef struct _menu_image
                 editor_vstate.filter.color_noise = true;
             }
 
+            if (ImGui::MenuItem("Vintage"))
+            {
+                editor_vstate.filter.vintage = true;
+            }
+
             ImGui::SeparatorText("Others");
 
             if (ImGui::MenuItem("Borders"))
@@ -1332,6 +1337,27 @@ typedef struct _menu_image
             }
 
             ImGui::EndPopup();
+        }
+    }
+
+    void vintage(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.vintage && loader.is_texture)
+        {
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            _vintage v;
+
+            // apply
+            if (v.load(loader.filename_path, loader))
+            {
+                v.apply(loader, &sdl_vstate);
+            }
+
+            message_vstate.init = true;
+            message_vstate.message = " Applied & Exported! ( Vintage )";
+            editor_vstate.filter.vintage = false;
         }
     }
 

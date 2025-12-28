@@ -26,6 +26,7 @@
 #include "filters/posterization.h"
 #include "filters/color_noise.h"
 #include "filters/white_correction.h"
+#include "filters/vintage.h"
 
 #include "filters/tritone.h"
 

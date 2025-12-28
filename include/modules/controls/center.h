@@ -31,7 +31,7 @@ typedef struct _center
         if (event.key.key == SDLK_2)
         {
             point->y += 0.5f;
-
+            
             message_vstate.init = true;
             message_vstate.message = "Center y: " + (std::ostringstream() << std::fixed << std::setprecision(2) << point->y).str();
         }
