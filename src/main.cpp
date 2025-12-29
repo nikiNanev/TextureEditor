@@ -183,6 +183,7 @@ int main(int, char **)
         menu_image.binary_thresholds(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.film_grain(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.vintage(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_image.halftone(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.color_noise(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         menu_image.emboss(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);

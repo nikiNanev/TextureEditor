@@ -23,6 +23,11 @@ typedef struct _menu_image
                 originator->save_action("Edge Enhancement filter");
             }
 
+            if (ImGui::MenuItem("Halftone"))
+            {
+                editor_vstate.filter.halftone = true;
+            }
+
             if (ImGui::MenuItem("Duotone"))
             {
                 editor_vstate.filter.duotone = true;
@@ -1358,6 +1363,27 @@ typedef struct _menu_image
             message_vstate.init = true;
             message_vstate.message = " Applied & Exported! ( Vintage )";
             editor_vstate.filter.vintage = false;
+        }
+    }
+
+    void halftone(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.halftone && loader.is_texture)
+        {
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            _halftone h;
+
+            // apply
+            if (h.load(loader.filename_path, loader))
+            {
+                h.apply(loader, &sdl_vstate);
+            }
+
+            message_vstate.init = true;
+            message_vstate.message = " Applied & Exported! ( Halftone )";
+            editor_vstate.filter.halftone = false;
         }
     }
 

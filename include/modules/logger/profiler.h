@@ -1,3 +1,6 @@
+#ifndef _PROFILER_H
+#define _PROFILER_H
+
 #include <iostream>
 #include <chrono>
 #include <string>
@@ -22,3 +25,5 @@ typedef struct profiler
 
     void report(std::string filename);
 } profiler;
+
+#endif

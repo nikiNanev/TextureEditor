@@ -51,6 +51,7 @@ typedef struct filters
     bool grayscale{false};
     bool posterization{false};
 
+    bool halftone{false};
     bool duotone{false};
     bool tritone{false};
     

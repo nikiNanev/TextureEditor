@@ -9,7 +9,7 @@ bool grayscale::load(const std::string &filename, loader &loader)
 bool grayscale::apply(loader &loader, sdl_state *sdl_pstate)
 {
 
-     // Profile the time consumption in the function
+    // Profile the time consumption in the function
     profiler p;
     p.function = "Grayscale";
 
@@ -40,7 +40,7 @@ bool grayscale::apply(loader &loader, sdl_state *sdl_pstate)
 
     counter++;
     p.report("report_grayscale_" + std::to_string(counter) + ".txt");
-    
+
     exporter exporter;
     std::string filename = exporter.formater("export_grayscale_", &counter, ".png");
 

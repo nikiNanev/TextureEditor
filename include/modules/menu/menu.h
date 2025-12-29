@@ -29,7 +29,7 @@
 #include "filters/vintage.h"
 
 #include "filters/tritone.h"
-
+#include "filters/halftone.h"
 
 #include "states/memento/memento.h"
 #include "states/editor_state.h"
