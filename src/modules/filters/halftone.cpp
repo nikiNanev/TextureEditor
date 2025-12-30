@@ -81,6 +81,8 @@ bool halftone::apply(loader &loader, sdl_state *sdl_pstate)
     profiler p;
     p.function = "Halftone";
 
+    p.start = p.start_timer();
+
     cell_size = (int)(150.0f / FREQUENCY);
 
     std::vector<unsigned char> c_map(loader.width * loader.height);
@@ -122,6 +124,8 @@ bool halftone::apply(loader &loader, sdl_state *sdl_pstate)
     halftone_channel(k_map.data(), temp.data(), loader.width, loader.height, loader.channels, 45.0f, 0, 0, 0);
     for (int i = 0; i < loader.width * loader.height * loader.channels; i++)
         output[i] = temp[i] < output[i] ? temp[i] : output[i]; // Darker wins for black
+
+    p.end = p.end_timer();
 
     static int counter = 0;
 

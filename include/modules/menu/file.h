@@ -6,6 +6,11 @@ typedef struct menu_file
         if (ImGui::BeginMenu("File"))
         {
 
+            if (ImGui::MenuItem("New"))
+            {
+                editor_vstate.new_file.create = true;
+            }
+
             if (ImGui::MenuItem("Open"))
             {
                 fileDialog.Open();
@@ -75,6 +80,86 @@ typedef struct menu_file
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_vstate.export_state.open_modal = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+    }
+
+    void create_new(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.new_file.create)
+        {
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("New File");
+
+            if (ImGui::BeginPopupModal("New File", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Create New Texture/Image");
+                ImGui::Separator();
+
+                static int size[2] = {512, 512};
+                static color color;
+                static float fill[3] = {0,0,0};
+                ImGui::SliderInt2("Size", size, 0, 2400);
+
+                char filename[64] = {""};
+
+                ImGui::InputText("Filename", filename, sizeof(filename));
+                ImGui::ColorPicker3("Fill", fill);
+
+                if (ImGui::Button("Create", ImVec2(120, 0)))
+                {
+                    editor_vstate.is_processing = false;
+
+                    message_vstate.init = true; // Success on export
+                    message_vstate.message = "Successful create!";
+
+                    caretaker->backup();
+                    originator->save_action("new image/texture");
+
+                    color.r = (unsigned char)(fill[0] * 256.0f);
+                    color.g = (unsigned char)(fill[1] * 256.0f);
+                    color.b = (unsigned char)(fill[2] * 256.0f);
+
+                    for(int i = 0; i < 3; i++)
+                    {
+                        std::cout << "value: " << (fill[i] * 256.f) << std::endl;
+                    }
+
+                    loader.texture = loader.create_texture(color, filename, size[0], size[1], sdl_vstate.renderer);
+
+                    sdl_vstate.src.w = loader.texture->w;
+                    sdl_vstate.src.h = loader.texture->h;
+
+                    sdl_vstate.dst.w = loader.texture->w;
+                    sdl_vstate.dst.h = loader.texture->h;
+
+                    if(loader.texture)
+                    {
+                        std::cout << "The texture is created?" << std::endl;
+
+                        std::cout << "src.w: " << sdl_vstate.src.w << std::endl;
+                        std::cout << "src.w: " << sdl_vstate.src.w << std::endl;
+                        std::cout << "dst.h: " << sdl_vstate.dst.h << std::endl;
+                        std::cout << "dst.h: " << sdl_vstate.dst.h << std::endl;
+                    }
+
+                    editor_vstate.new_file.create = false;
+                    editor_vstate.is_processing = false;
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.new_file.create = false;
                     editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }

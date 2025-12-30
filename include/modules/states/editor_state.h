@@ -103,11 +103,18 @@ typedef struct image_state
 
 } image_state;
 
+typedef struct new_file
+{
+    bool create{false};
+} new_file;
+
 typedef struct _editor_state
 {
     export_state export_state;
     report_state report_state;
     image_state image_state;
+
+    new_file new_file;
 
     info info;
     filters filter;

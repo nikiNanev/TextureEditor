@@ -73,7 +73,7 @@ int main(int, char **)
     menu_about menu_about;
     menu_help menu_help;
 
-    //Info
+    // Info
     image_info image_info;
 
     bool done{false};
@@ -154,8 +154,7 @@ int main(int, char **)
         {
             loader.image_load(fileDialog.GetSelected().c_str(), loader.pixels_data);
             loader.texture_load(fileDialog.GetSelected().c_str(), sdl_vstate.renderer, &sdl_vstate.src);
-            std::cout << "Filename: " << fileDialog.GetSelected().c_str() <<  std::endl;
-            //Init parameters to the texture
+            
             center.init(&sdl_vstate);
 
             fileDialog.ClearSelected();
@@ -167,6 +166,8 @@ int main(int, char **)
             message_vstate.display(&sdl_vstate, &imgui_vstate);
         }
 
+        menu_file.create_new(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+
         // Filtering
         menu_image.gaussian_blur(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.edge_enhancement(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
@@ -175,10 +176,8 @@ int main(int, char **)
         menu_image.duotone(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.tritone(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
-
         menu_image.contrast_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.exposure_adjustment(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
-
 
         menu_image.binary_thresholds(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.film_grain(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
@@ -195,7 +194,7 @@ int main(int, char **)
         menu_image.white_correction(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
         menu_image.grayscale(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
-        //Info/Stats
+        // Info/Stats
         image_info.display(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         // Editing ( Resize )
@@ -228,10 +227,9 @@ int main(int, char **)
 
         if (loader.texture)
         {
-            // SDL_RenderTexture(sdl_vstate.renderer, loader.texture, &sdl_vstate.src, &sdl_vstate.dst);
             SDL_RenderTextureRotated(sdl_vstate.renderer, loader.texture, &sdl_vstate.src, &sdl_vstate.dst, center.angle, &center.point, flip.flag);
             SDL_SetRenderDrawColor(sdl_vstate.renderer, 255, 0, 0, 255);
-            SDL_RenderFillRect(sdl_vstate.renderer, &center.rect);            
+            SDL_RenderFillRect(sdl_vstate.renderer, &center.rect);
         }
 
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), sdl_vstate.renderer);
