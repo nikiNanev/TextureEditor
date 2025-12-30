@@ -50,21 +50,50 @@ bool loader::image_load(const char *filename, std::vector<unsigned char> &pixels
     }
 }
 
-SDL_Texture *loader::create_texture(color &color, const char *filename, int &width, int &height, SDL_Renderer *renderer)
+SDL_Texture *loader::create_texture(color &color, const char *filename, int width, int height, sdl_state &sdl_vstate)
 {
-    SDL_Surface *surface = SDL_CreateSurface(width, height, SDL_PIXELFORMAT_RGBA8888);
-    const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA8888);
-    std::cout << "color ( r: " << (int)color.r << " g: " << (int)color.g << " b: " << (int)color.b << std::endl;
-    SDL_FillSurfaceRect(surface, NULL, SDL_MapRGBA(details, NULL, (uint8_t)color.r, (uint8_t)color.g, (uint8_t)color.b, 255)); 
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_DestroySurface(surface);
-
-    if (texture == NULL)
-    {
-        SDL_Log("Failed to create texture: %s", SDL_GetError());
-        return NULL;
-    }
     this->is_texture = true;
+    this->channels = 4;
+
+    int pixel_index{0};
+
+    this->pixels_data = std::vector<unsigned char>(width * height * channels);
+
+    for (int i = 0; i < width; i++)
+    {
+        for (int j = 0; j < height; j++)
+        {
+            pixel_index = (i * height + j) * channels;
+
+            pixels_data[pixel_index + 0] = color.r;
+            pixels_data[pixel_index + 1] = color.g;
+            pixels_data[pixel_index + 2] = color.b;
+            pixels_data[pixel_index + 3] = 255;
+        }
+    }
+
+    if (strlen(filename) > 3 && strlen(filename) < 50)
+    {
+        this->filename_path = "../assets/images/";
+        this->filename_path.append(filename);
+        this->filename_path.append(".png");
+    }
+    else
+    {
+        this->filename_path = "../assets/images/new_texture.png";
+    }
+
+    if (stbi_write_png(this->filename_path.c_str(), width, height, this->channels, pixels_data.data(), width * this->channels))
+    {
+        texture_load(this->filename_path.c_str(), sdl_vstate.renderer, &sdl_vstate.src);
+    }
+
+    sdl_vstate.src.w = texture->w;
+    sdl_vstate.src.h = texture->h;
+
+    sdl_vstate.dst.w = texture->w;
+    sdl_vstate.dst.h = texture->h;
+
     return texture;
 }
 

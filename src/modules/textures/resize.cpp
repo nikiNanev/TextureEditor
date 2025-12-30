@@ -5,6 +5,9 @@ void resize::apply(loader *loader, sdl_state *sdl_vstate, float &width, float &h
     loader->texture->w = width;
     loader->texture->h = height;
 
+    loader->width = width;
+    loader->height = height;
+
     sdl_vstate->src.w = width;
     sdl_vstate->src.h = height;
 

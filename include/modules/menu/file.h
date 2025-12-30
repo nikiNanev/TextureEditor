@@ -106,7 +106,7 @@ typedef struct menu_file
                 static float fill[3] = {0,0,0};
                 ImGui::SliderInt2("Size", size, 0, 2400);
 
-                char filename[64] = {""};
+                static char filename[64] = {""};
 
                 ImGui::InputText("Filename", filename, sizeof(filename));
                 ImGui::ColorPicker3("Fill", fill);
@@ -130,23 +130,10 @@ typedef struct menu_file
                         std::cout << "value: " << (fill[i] * 256.f) << std::endl;
                     }
 
-                    loader.texture = loader.create_texture(color, filename, size[0], size[1], sdl_vstate.renderer);
+                    std::cout << filename << std::endl;
+                    std::cout << "size[0]: " << size[0] << " size[1]: " << size[1] << std::endl;
 
-                    sdl_vstate.src.w = loader.texture->w;
-                    sdl_vstate.src.h = loader.texture->h;
-
-                    sdl_vstate.dst.w = loader.texture->w;
-                    sdl_vstate.dst.h = loader.texture->h;
-
-                    if(loader.texture)
-                    {
-                        std::cout << "The texture is created?" << std::endl;
-
-                        std::cout << "src.w: " << sdl_vstate.src.w << std::endl;
-                        std::cout << "src.w: " << sdl_vstate.src.w << std::endl;
-                        std::cout << "dst.h: " << sdl_vstate.dst.h << std::endl;
-                        std::cout << "dst.h: " << sdl_vstate.dst.h << std::endl;
-                    }
+                    loader.texture = loader.create_texture(color, filename, size[0], size[1], sdl_vstate);
 
                     editor_vstate.new_file.create = false;
                     editor_vstate.is_processing = false;
