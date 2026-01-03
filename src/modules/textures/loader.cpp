@@ -50,7 +50,7 @@ bool loader::image_load(const char *filename, std::vector<unsigned char> &pixels
     }
 }
 
-SDL_Texture *loader::create_texture(color &color, const char *filename, int width, int height, sdl_state &sdl_vstate)
+SDL_Texture *loader::create_texture(color &color, std::string filename, int width, int height, sdl_state &sdl_vstate)
 {
     this->is_texture = true;
     this->channels = 4;
@@ -72,7 +72,7 @@ SDL_Texture *loader::create_texture(color &color, const char *filename, int widt
         }
     }
 
-    if (strlen(filename) > 3 && strlen(filename) < 50)
+    if (filename.size() >= 1 && filename.size() <= 50)
     {
         this->filename_path = "../assets/images/";
         this->filename_path.append(filename);
@@ -93,6 +93,8 @@ SDL_Texture *loader::create_texture(color &color, const char *filename, int widt
 
     sdl_vstate.dst.w = texture->w;
     sdl_vstate.dst.h = texture->h;
+
+    std::cout << "stats\n\nfilename: " << this->filename_path << "\nwidth: " << texture->w << " height: " << texture->h << std::endl;
 
     return texture;
 }

@@ -16,8 +16,8 @@
 #include "stats/image_info.h"
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 0
-#define VERSION_PATCH 0
+#define VERSION_MINOR 23
+#define VERSION_PATCH 3
 
 #include "initializers.h"
 
@@ -28,7 +28,7 @@ int main(int, char **)
                 .y = 0.0f,
                 .w = 0.0f,
                 .h = 0.0f},
-        .dst = {.x = 400.0f, .y = 200.0f, .w = 400.0f, .h = 400.0f}};
+        .dst = {.x = 400.0f, .y = 200.0f, .w = 512.0f, .h = 512.0f}};
     imgui_state imgui_vstate;
 
     init_sdl(&sdl_vstate);
@@ -112,12 +112,14 @@ int main(int, char **)
 
                 if (loader.is_texture)
                 {
-                    // Rotations
-                    rotations.controls(event, center.angle, factor_angle, add_wait_seconds, message_vstate);
-                    flip.controls(event, message_vstate, add_wait_seconds);
-                    center.controls(event, message_vstate, &center.point, loader.texture, &sdl_vstate);
+                    if (!editor_vstate.is_processing)
+                    {
+                        rotations.controls(event, center.angle, factor_angle, add_wait_seconds, message_vstate);
+                        flip.controls(event, message_vstate, add_wait_seconds);
+                        center.controls(event, message_vstate, &center.point, loader.texture, &sdl_vstate);
 
-                    control.activate_resize(event, message_vstate, editor_vstate);
+                        control.activate_resize(event, message_vstate, editor_vstate);
+                    }
                 }
 
                 if (event.key.key == SDLK_Z && left_cntrl_holded)
@@ -154,7 +156,7 @@ int main(int, char **)
         {
             loader.image_load(fileDialog.GetSelected().c_str(), loader.pixels_data);
             loader.texture_load(fileDialog.GetSelected().c_str(), sdl_vstate.renderer, &sdl_vstate.src);
-            
+
             center.init(&sdl_vstate);
 
             fileDialog.ClearSelected();
@@ -203,6 +205,8 @@ int main(int, char **)
 
         menu_edit.flip(editor_vstate, loader, message_vstate, &flip.flag);
         menu_edit.rotate(editor_vstate, loader, message_vstate, &center, sdl_vstate);
+
+        menu_edit.strips(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         // Styles ( Themes )
         menu_settings.themes(editor_vstate, caretaker, originator, message_vstate);

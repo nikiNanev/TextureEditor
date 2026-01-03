@@ -37,6 +37,13 @@ typedef struct _menu_edit
                 editor_vstate.edit.is_rotate = true;
             }
 
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Strips..."))
+            {
+                editor_vstate.edit.strips = true;
+            }
+
             ImGui::EndMenu();
         }
     }
@@ -253,6 +260,67 @@ typedef struct _menu_edit
             }
         }
 
+    }
+
+    void strips(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.edit.strips && loader.is_texture)
+        {
+            _resize resize;
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("Strips");
+
+            if (ImGui::BeginPopupModal("Strips", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Split your texture to create a grid");
+                ImGui::Separator();
+
+                static int horizontal_strips, vertical_strips;
+                static float color_in[3];
+
+                ImGui::SliderInt("Horizontal strips", &horizontal_strips, 0, 64);
+                ImGui::SliderInt("Vertical strips", &vertical_strips, 0, 64);
+
+                ImGui::ColorPicker3("Strips Color", color_in);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.edit.strips = false;
+                    editor_vstate.is_processing = false;
+
+                    caretaker->backup();
+                    originator->save_snapshot(loader.texture, loader.filename_path);
+
+                    _strips strips;
+
+                    strips.horizontal_strips = horizontal_strips;
+                    strips.vertical_strips = vertical_strips;
+
+                    strips.color.r = (unsigned char)(color_in[0] * 255.f);
+                    strips.color.g = (unsigned char)(color_in[1] * 255.f);
+                    strips.color.b = (unsigned char)(color_in[2] * 255.f);
+
+                    strips.apply(loader, sdl_vstate);
+                    
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied & Exported! ( Splitter )";
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.edit.strips = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
     }
 
 } menu_edit;

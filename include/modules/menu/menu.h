@@ -7,6 +7,8 @@
 #include "textures/resize.h"
 #include "logger/messenger.h"
 
+#include "effects/strips.h"
+
 #include "filters/blur.h"
 #include "filters/edge_enhancement.h"
 #include "filters/brightness_adjustment.h"

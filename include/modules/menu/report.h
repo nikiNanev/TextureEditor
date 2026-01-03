@@ -20,6 +20,7 @@ typedef struct _menu_report
 
         if (editor_vstate.report_state.init)
         {
+            editor_vstate.is_processing = true;
             ImGui::OpenPopup("Report", ImGuiPopupFlags_AnyPopup);
 
             if (ImGui::BeginPopupModal("Report", NULL, ImGuiWindowFlags_AlwaysAutoResize))

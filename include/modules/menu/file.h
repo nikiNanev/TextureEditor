@@ -103,10 +103,10 @@ typedef struct menu_file
 
                 static int size[2] = {512, 512};
                 static color color;
-                static float fill[3] = {0,0,0};
+                static float fill[3] = {1.0f, 1.0f, 1.0f};
                 ImGui::SliderInt2("Size", size, 0, 2400);
 
-                static char filename[64] = {""};
+                static char filename[64] = {"new_texture"};
 
                 ImGui::InputText("Filename", filename, sizeof(filename));
                 ImGui::ColorPicker3("Fill", fill);
@@ -121,19 +121,25 @@ typedef struct menu_file
                     caretaker->backup();
                     originator->save_action("new image/texture");
 
-                    color.r = (unsigned char)(fill[0] * 256.0f);
-                    color.g = (unsigned char)(fill[1] * 256.0f);
-                    color.b = (unsigned char)(fill[2] * 256.0f);
 
-                    for(int i = 0; i < 3; i++)
+
+                    color.r = (unsigned char)(fill[0] * 255);
+                    color.g = (unsigned char)(fill[1] * 255);
+                    color.b = (unsigned char)(fill[2] * 255);
+
+                    for (int i = 0; i < 3; i++)
                     {
-                        std::cout << "value: " << (fill[i] * 256.f) << std::endl;
+                        std::cout << "value: " << (fill[i]) << std::endl;
                     }
+
+                    std::cout << "Colors: \n\n red: " << (int)color.r << " green: " << (int)color.g << " blue: " << (int)color.b << "\n\n";  
 
                     std::cout << filename << std::endl;
                     std::cout << "size[0]: " << size[0] << " size[1]: " << size[1] << std::endl;
 
-                    loader.texture = loader.create_texture(color, filename, size[0], size[1], sdl_vstate);
+                    std::string file(filename);
+
+                    loader.texture = loader.create_texture(color, file, size[0], size[1], sdl_vstate);
 
                     editor_vstate.new_file.create = false;
                     editor_vstate.is_processing = false;

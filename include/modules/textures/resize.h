@@ -1,5 +1,4 @@
 #include "loader.h"
-#include "states/editor_state.h"
 
 typedef struct _resize
 {
