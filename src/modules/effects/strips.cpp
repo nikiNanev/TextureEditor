@@ -107,10 +107,10 @@ bool strips::apply(loader &loader, sdl_state &sdl_pstate)
 
     counter++;
 
-    p.report("report_splitter_" + std::to_string(counter) + ".txt");
+    p.report("report_strips_" + std::to_string(counter) + ".txt");
 
     exporter exporter;
-    std::string filename = exporter.formater("export_splitter_", &counter, ".png");
+    std::string filename = exporter.formater("export_strips_", &counter, ".png");
 
     if (stbi_write_png(filename.c_str(), loader.width, loader.height, loader.channels, image.data(), loader.width * loader.channels))
     {
