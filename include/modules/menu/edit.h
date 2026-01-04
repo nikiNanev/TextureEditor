@@ -44,6 +44,11 @@ typedef struct _menu_edit
                 editor_vstate.edit.strips = true;
             }
 
+            if (ImGui::MenuItem("Blending..."))
+            {
+                editor_vstate.edit.blending = true;
+            }
+
             ImGui::EndMenu();
         }
     }
@@ -218,7 +223,6 @@ typedef struct _menu_edit
 
                 static float v[2] = {center->point.x, center->point.y};
 
-
                 std::cout << "floats: (x: " << v[0] << ") (y: " << v[1] << ")" << std::endl;
                 std::cout << "floats: (x: " << center->point.x << ") (y: " << center->point.y << ")" << std::endl;
 
@@ -226,7 +230,7 @@ typedef struct _menu_edit
 
                 center->point.x = v[0];
                 center->point.y = v[1];
-                
+
                 center->rect.x = sdl_vstate.dst.x + center->point.x;
                 center->rect.y = sdl_vstate.dst.y + center->point.y;
 
@@ -259,14 +263,12 @@ typedef struct _menu_edit
                 ImGui::EndPopup();
             }
         }
-
     }
 
     void strips(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
     {
         if (editor_vstate.edit.strips && loader.is_texture)
         {
-            _resize resize;
             editor_vstate.is_processing = true;
 
             ImGui::OpenPopup("Strips");
@@ -302,9 +304,9 @@ typedef struct _menu_edit
                     strips.color.b = (unsigned char)(color_in[2] * 255.f);
 
                     strips.apply(loader, sdl_vstate);
-                    
+
                     message_vstate.init = true;
-                    message_vstate.message = " Applied & Exported! ( Splitter )";
+                    message_vstate.message = " Applied & Exported! ( Strips )";
 
                     ImGui::CloseCurrentPopup();
                 }
@@ -315,6 +317,68 @@ typedef struct _menu_edit
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_vstate.edit.strips = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+    }
+
+    void blending(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.edit.blending && loader.is_texture)
+        {
+            editor_vstate.is_processing = true;
+
+            ImGui::OpenPopup("Blending");
+
+            if (ImGui::BeginPopupModal("Blending", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Blend part of your texture based on width & height");
+                ImGui::Separator();
+
+                static float width{0.0f}, height{0.0f}, alpha{0.0f};
+
+                ImGui::SliderFloat("Alpha", &alpha, 0, 1);
+                ImGui::SliderFloat("Width", &width, 0, 2400.0f);
+                ImGui::SliderFloat("Height", &height, 0, 2400.0f);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.edit.blending = false;
+                    editor_vstate.is_processing = false;
+
+                    caretaker->backup();
+                    originator->save_snapshot(loader.texture, loader.filename_path);
+
+                    _blending blending;
+
+                    alpha = std::abs(alpha - 1);
+
+                    blending.alpha = (unsigned char)(alpha * 255.0f);
+
+                    blending.width = width;
+                    blending.height = height;
+
+                    blending.apply(loader, sdl_vstate);
+
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied & Exported! ( Blending )";
+
+                    // Reset
+                    alpha = 0;
+                    width = 0, height = 0;
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.edit.blending = false;
                     editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }

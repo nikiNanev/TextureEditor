@@ -74,6 +74,7 @@ typedef struct edit
     bool is_rotate{false};
 
     bool strips{false};
+    bool blending{false};
 
     float scale{1.0f};
 } edit;

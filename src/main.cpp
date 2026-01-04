@@ -207,6 +207,7 @@ int main(int, char **)
         menu_edit.rotate(editor_vstate, loader, message_vstate, &center, sdl_vstate);
 
         menu_edit.strips(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
+        menu_edit.blending(editor_vstate, loader, caretaker, originator, message_vstate, sdl_vstate);
 
         // Styles ( Themes )
         menu_settings.themes(editor_vstate, caretaker, originator, message_vstate);

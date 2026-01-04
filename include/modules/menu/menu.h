@@ -8,6 +8,7 @@
 #include "logger/messenger.h"
 
 #include "effects/strips.h"
+#include "effects/blending.h"
 
 #include "filters/blur.h"
 #include "filters/edge_enhancement.h"
