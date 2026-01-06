@@ -20,6 +20,7 @@
 #include "filters/film_grain.h"
 #include "filters/high_pass.h"
 #include "filters/emboss.h"
+#include "filters/roberts_cross.h"
 
 #include "filters/gamma_correction.h"
 #include "filters/borders.h"
@@ -28,11 +29,13 @@
 #include "filters/grayscale.h"
 #include "filters/posterization.h"
 #include "filters/color_noise.h"
+#include "filters/color_noise_2.h"
 #include "filters/white_correction.h"
 #include "filters/vintage.h"
 
 #include "filters/tritone.h"
 #include "filters/halftone.h"
+#include "filters/sepia_tone.h"
 
 #include "states/memento/memento.h"
 #include "states/editor_state.h"

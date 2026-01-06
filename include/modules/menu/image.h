@@ -43,6 +43,11 @@ typedef struct _menu_image
                 editor_vstate.filter.posterization = true;
             }
 
+            if (ImGui::MenuItem("Sepia Tone"))
+            {
+                editor_vstate.filter.sepia_tone = true;
+            }
+
             ImGui::SeparatorText("Adjustment & Corrections");
 
             if (ImGui::MenuItem("Brightness Adjustment"))
@@ -79,6 +84,11 @@ typedef struct _menu_image
                 editor_vstate.filter.white_correction = true;
             }
 
+            if (ImGui::MenuItem("Roberts Cross"))
+            {
+                editor_vstate.filter.roberts_cross = true;
+            }
+
             ImGui::SeparatorText("Noises");
 
             if (ImGui::MenuItem("Blur"))
@@ -97,6 +107,11 @@ typedef struct _menu_image
             if (ImGui::MenuItem("Color Noise"))
             {
                 editor_vstate.filter.color_noise = true;
+            }
+
+            if (ImGui::MenuItem("Color Noise 2"))
+            {
+                editor_vstate.filter.color_noise_2 = true;
             }
 
             if (ImGui::MenuItem("Vintage"))
@@ -494,6 +509,73 @@ typedef struct _menu_image
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
                     editor_vstate.filter.color_noise = false;
+                    editor_vstate.is_processing = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+    }
+
+    void color_noise_2(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.color_noise_2 && loader.is_texture)
+        {
+            ImGui::OpenPopup("Color Noise 2");
+
+            if (ImGui::BeginPopupModal("Color Noise 2", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Color Noise 2");
+                ImGui::Separator();
+
+                static float intensity1{0.0f}, intensity2{0.0f};
+                static float color1[3], color2[3];
+
+                ImGui::SliderFloat("Intensity 1", &intensity1, 0, 100, "%.4f");
+                ImGui::SliderFloat("Intensity 2", &intensity2, 0, 100, "%.4f");
+
+                ImGui::ColorPicker3("Color Noise 1", color1);
+                ImGui::ColorPicker3("Color Noise 2", color2);
+
+                if (ImGui::Button("Ok", ImVec2(60, 0)))
+                {
+                    editor_vstate.filter.color_noise_2 = false;
+                    editor_vstate.is_processing = false;
+
+                    caretaker->backup();
+                    originator->save_snapshot(loader.texture, loader.filename_path);
+
+                    _color_noise_2 cn;
+
+                    // apply
+                    if (cn.load(loader.filename_path, loader))
+                    {
+                        cn.color1.r = color1[0] * 256.f;
+                        cn.color1.g = color1[1] * 256.f;
+                        cn.color1.b = color1[2] * 256.f;
+
+                        cn.color2.r = color2[0] * 256.f;
+                        cn.color2.g = color2[1] * 256.f;
+                        cn.color2.b = color2[2] * 256.f;
+
+                        cn.intensity1 = intensity1;
+                        cn.intensity2 = intensity2;
+
+                        cn.apply(loader, &sdl_vstate);
+                    }
+
+                    message_vstate.init = true;
+                    message_vstate.message = " Applied & Exported! ( Color Noise 2 )";
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    editor_vstate.filter.color_noise_2 = false;
                     editor_vstate.is_processing = false;
                     ImGui::CloseCurrentPopup();
                 }
@@ -1384,6 +1466,48 @@ typedef struct _menu_image
             message_vstate.init = true;
             message_vstate.message = " Applied & Exported! ( Halftone )";
             editor_vstate.filter.halftone = false;
+        }
+    }
+
+    void sepia_tone(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.sepia_tone && loader.is_texture)
+        {
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            _sepia_tone st;
+
+            // apply
+            if (st.load(loader.filename_path, loader))
+            {
+                st.apply(loader, &sdl_vstate);
+            }
+
+            message_vstate.init = true;
+            message_vstate.message = " Applied & Exported! ( Sepia Tone )";
+            editor_vstate.filter.sepia_tone = false;
+        }
+    }
+
+    void roberts_cross(editor_state &editor_vstate, loader &loader, Caretaker *caretaker, Originator *originator, message_state &message_vstate, sdl_state &sdl_vstate)
+    {
+        if (editor_vstate.filter.roberts_cross && loader.is_texture)
+        {
+            caretaker->backup();
+            originator->save_snapshot(loader.texture, loader.filename_path);
+
+            _roberts_cross rc;
+
+            // apply
+            if (rc.load(loader.filename_path, loader))
+            {
+                rc.apply(loader, &sdl_vstate);
+            }
+
+            message_vstate.init = true;
+            message_vstate.message = " Applied & Exported! ( Roberts Cross )";
+            editor_vstate.filter.roberts_cross = false;
         }
     }
 

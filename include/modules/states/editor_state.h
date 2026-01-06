@@ -41,12 +41,14 @@ typedef struct filters
     bool binary_thresholds{false};
     bool film_grain{false};
     bool color_noise{false};
+    bool color_noise_2{false};
     bool vintage{false};
 
 
     bool emboss{false};
     bool gamma_correction{false};
     bool white_correction{false};
+    bool roberts_cross{false};
     bool invert{false};
     bool grayscale{false};
     bool posterization{false};
@@ -54,6 +56,7 @@ typedef struct filters
     bool halftone{false};
     bool duotone{false};
     bool tritone{false};
+    bool sepia_tone{false};
     
 } filters;
 
