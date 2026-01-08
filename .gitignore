@@ -1,0 +1,6 @@
+vcpkg_installed
+build
+out
+build
+deps
+.vs
